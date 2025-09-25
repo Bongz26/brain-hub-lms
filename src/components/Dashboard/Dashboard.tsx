@@ -5,6 +5,7 @@ import { profileService } from '../../services/profileService';
 import { Profile } from '../../types/profile';
 import { EditProfile } from '../Profile/EditProfile';
 import { CourseList } from '../Courses/CourseList';
+import { MyCourses } from '../Courses/MyCourses';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -186,16 +187,6 @@ export const Dashboard: React.FC = () => {
                   </button>
                 )}
               </div>
-
-              {/* Recent Activity (Placeholder) */}
-              <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="font-semibold text-lg mb-4">Recent Activity</h3>
-                <p className="text-gray-600 text-center py-4">
-                  {profile?.role === 'student' 
-                    ? 'Your learning activity will appear here once you enroll in courses.'
-                    : 'Your teaching activity will appear here once you create courses.'}
-                </p>
-              </div>
             </div>
           )}
 
@@ -203,26 +194,7 @@ export const Dashboard: React.FC = () => {
           {currentView === 'courses' && <CourseList />}
 
           {/* My Courses View */}
-          {currentView === 'my-courses' && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-2xl font-bold mb-6">My Courses</h2>
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-6xl mb-4">📚</div>
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No courses yet</h3>
-                <p className="text-gray-500 mb-4">
-                  {profile?.role === 'student' 
-                    ? 'Enroll in courses to see them here.'
-                    : 'Create your first course to get started.'}
-                </p>
-                <button 
-                  onClick={() => setCurrentView('courses')}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  {profile?.role === 'student' ? 'Browse Courses' : 'Create Course'}
-                </button>
-              </div>
-            </div>
-          )}
+          {currentView === 'my-courses' && <MyCourses />}
         </div>
       </main>
 

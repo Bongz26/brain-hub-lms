@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+//import type { Database } from './types/supabase';
 
 // For Create React App, use process.env instead of import.meta.env
 

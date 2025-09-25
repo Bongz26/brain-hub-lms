@@ -178,6 +178,19 @@ export const CourseList: React.FC = () => {
 const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
   const { user } = useAuth();
   const [enrolling, setEnrolling] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+   // Check if user is already enrolled
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (user) {
+        const enrolled = await courseService.isEnrolledInCourse(course.id);
+        setIsEnrolled(enrolled);
+      }
+    };
+    checkEnrollment();
+  }, [user, course.id]);
+  
 
   const handleEnroll = async () => {
     if (!user) {
