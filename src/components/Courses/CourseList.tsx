@@ -11,11 +11,14 @@ export const CourseList: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setError(null);
+        setLoading(true);
+        
         console.log('Loading courses and subjects...');
         
         const [subjectsData, coursesData] = await Promise.all([
@@ -23,21 +26,32 @@ export const CourseList: React.FC = () => {
           courseService.getCourses()
         ]);
         
-        console.log('Subjects loaded:', subjectsData);
-        console.log('Courses loaded:', coursesData);
+        console.log('Data loaded successfully');
         
         setSubjects(subjectsData);
         setCourses(coursesData);
+        
+        // Reset retry count on success
+        setRetryCount(0);
       } catch (error: any) {
         console.error('Error loading data:', error);
-        setError('Failed to load courses. Please try again.');
+        
+        // Retry logic (max 3 retries)
+        if (retryCount < 3) {
+          setError(`Server busy. Retrying... (${retryCount + 1}/3)`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+          }, 2000); // Retry after 2 seconds
+        } else {
+          setError('Server is busy. Please try again in a few minutes.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [retryCount]); // Retry when retryCount changes
 
   const filteredCourses = courses.filter(course => {
     if (selectedGrade && course.grade_level !== selectedGrade) return false;
@@ -45,10 +59,18 @@ export const CourseList: React.FC = () => {
     return true;
   });
 
+  const handleRetry = () => {
+    setRetryCount(0); // Reset retry count
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center h-64 flex-col">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-gray-600">Loading courses...</p>
+        {retryCount > 0 && (
+          <p className="text-sm text-gray-500 mt-2">Retry attempt {retryCount}/3</p>
+        )}
       </div>
     );
   }
@@ -56,15 +78,23 @@ export const CourseList: React.FC = () => {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <div className="text-red-600 text-4xl mb-2">⚠️</div>
-          <h3 className="text-lg font-medium text-red-800 mb-2">{error}</h3>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Retry
-          </button>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+          <div className="text-yellow-600 text-4xl mb-2">⚠️</div>
+          <h3 className="text-lg font-medium text-yellow-800 mb-2">{error}</h3>
+          <div className="space-x-4">
+            <button 
+              onClick={handleRetry}
+              className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Reload Page
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -166,7 +196,6 @@ const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
     }
   };
 
-  // Format price safely
   const formatPrice = (price: any) => {
     if (typeof price === 'number') {
       return price.toFixed(2);
@@ -180,7 +209,6 @@ const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-200">
       <div className="p-6">
-        {/* Course Header */}
         <div className="flex justify-between items-start mb-3">
           <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">{course.title}</h3>
           <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded whitespace-nowrap ml-2">
@@ -188,11 +216,9 @@ const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
           </span>
         </div>
         
-        {/* Subject and Description */}
         <p className="text-blue-600 font-medium mb-2">{course.subject?.name}</p>
         <p className="text-gray-700 mb-4 line-clamp-3">{course.description}</p>
         
-        {/* Price and Duration */}
         <div className="flex justify-between items-center mb-4">
           <span className="text-lg font-bold text-green-600">
             R{formatPrice(course.price)}
@@ -202,7 +228,6 @@ const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
           </span>
         </div>
 
-        {/* Tutor and Capacity */}
         <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
           <span className="truncate">
             Tutor: {course.tutor ? `${course.tutor.first_name} ${course.tutor.last_name}` : 'Expert Tutor'}
@@ -210,7 +235,6 @@ const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
           <span>{course.max_students} spots</span>
         </div>
 
-        {/* Enroll Button */}
         <button
           onClick={handleEnroll}
           disabled={enrolling}
