@@ -1,31 +1,9 @@
 import { supabase } from '../lib/supabase';
 import { Course, Subject, Enrollment } from '../types/course';
 
-// Simple cache to avoid frequent API calls
-let coursesCache: Course[] | null = null;
-let subjectsCache: Subject[] | null = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 60000; // 1 minute cache
-
-const retryOperation = async <T>(operation: () => Promise<T>, retries = 3): Promise<T> => {
-  try {
-    return await operation();
-  } catch (error: any) {
-    if (retries > 0 && error.message.includes('busy')) {
-      console.log(`Server busy, retrying... (${retries} retries left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return retryOperation(operation, retries - 1);
-    }
-    throw error;
-  }
-};
 export const courseService = {
-  // Get all subjects with caching
+  // Get all subjects
   async getSubjects(): Promise<Subject[]> {
-    if (subjectsCache && Date.now() - lastFetchTime < CACHE_DURATION) {
-      return subjectsCache;
-    }
-
     try {
       const { data, error } = await supabase
         .from('subjects')
@@ -33,58 +11,88 @@ export const courseService = {
         .order('name');
 
       if (error) {
-        console.warn('Error fetching subjects, using cache:', error);
-        return subjectsCache || [];
+        console.error('Error fetching subjects:', error);
+        return [];
       }
-
-      subjectsCache = data || [];
-      lastFetchTime = Date.now();
-      return subjectsCache;
+      return data || [];
     } catch (error) {
-      console.warn('Exception fetching subjects, using cache:', error);
-      return subjectsCache || [];
+      console.error('Exception fetching subjects:', error);
+      return [];
     }
   },
 
-  // Get all available courses with caching
+  // Get all available courses
   async getCourses(gradeLevel?: number): Promise<Course[]> {
-    if (coursesCache && Date.now() - lastFetchTime < CACHE_DURATION) {
-      return this.filterCourses(coursesCache, gradeLevel);
-    }
-
     try {
       let query = supabase
         .from('courses')
-        .select(`
-          *,
-          subject:subjects(*),
-          enrollments!left(count)
-        `)
+        .select('*')
         .eq('is_active', true);
+
+      if (gradeLevel) {
+        query = query.eq('grade_level', gradeLevel);
+      }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('Error fetching courses, using cache:', error);
-        return coursesCache ? this.filterCourses(coursesCache, gradeLevel) : [];
+        console.error('Error fetching courses:', error);
+        return [];
       }
 
-      coursesCache = data || [];
-      lastFetchTime = Date.now();
-      return this.filterCourses(coursesCache, gradeLevel);
+      // If we have courses, get subjects separately
+      if (data && data.length > 0) {
+        const coursesWithSubjects = await Promise.all(
+          data.map(async (course) => {
+            try {
+              const { data: subjectData } = await supabase
+                .from('subjects')
+                .select('*')
+                .eq('id', course.subject_id)
+                .single();
+              
+              return {
+                ...course,
+                subject: subjectData
+              };
+            } catch (subjectError) {
+              console.warn('Could not fetch subject for course:', course.id);
+              return course;
+            }
+          })
+        );
+        
+        return coursesWithSubjects;
+      }
+      
+      return data || [];
     } catch (error) {
-      console.warn('Exception fetching courses, using cache:', error);
-      return coursesCache ? this.filterCourses(coursesCache, gradeLevel) : [];
+      console.error('Exception fetching courses:', error);
+      return [];
     }
   },
 
-  // Helper method to filter courses by grade level
-  filterCourses(courses: Course[], gradeLevel?: number): Course[] {
-    if (!gradeLevel) return courses;
-    return courses.filter(course => course.grade_level === gradeLevel);
+  // Get courses by tutor
+  async getTutorCourses(tutorId: string): Promise<Course[]> {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('tutor_id', tutorId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching tutor courses:', error);
+        return [];
+      }
+      return data || [];
+    } catch (error) {
+      console.error('Exception fetching tutor courses:', error);
+      return [];
+    }
   },
 
-  // ENROLLMENT FUNCTIONALITY
+  // Enroll in a course
   async enrollInCourse(courseId: string): Promise<Enrollment> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -102,17 +110,6 @@ export const courseService = {
         throw new Error('You are already enrolled in this course');
       }
 
-      // Check course capacity
-      const { data: course } = await supabase
-        .from('courses')
-        .select('max_students, enrollments(count)')
-        .eq('id', courseId)
-        .single();
-
-      if (course && course.enrollments && course.enrollments[0].count >= course.max_students) {
-        throw new Error('This course is full');
-      }
-
       // Create enrollment
       const { data, error } = await supabase
         .from('enrollments')
@@ -121,19 +118,10 @@ export const courseService = {
           course_id: courseId,
           status: 'active'
         })
-        .select(`
-          *,
-          course:courses(*, 
-            subject:subjects(*),
-            tutor:profiles(first_name, last_name)
-          )
-        `)
+        .select('*')
         .single();
 
       if (error) throw error;
-      
-      // Clear cache to reflect new enrollment
-      coursesCache = null;
       return data;
     } catch (error) {
       console.error('Error enrolling in course:', error);
@@ -146,13 +134,7 @@ export const courseService = {
     try {
       const { data, error } = await supabase
         .from('enrollments')
-        .select(`
-          *,
-          course:courses(*, 
-            subject:subjects(*),
-            tutor:profiles(first_name, last_name)
-          )
-        `)
+        .select('*')
         .eq('student_id', studentId)
         .order('enrolled_at', { ascending: false });
 
@@ -176,9 +158,6 @@ export const courseService = {
         .eq('id', enrollmentId);
 
       if (error) throw error;
-      
-      // Clear cache
-      coursesCache = null;
     } catch (error) {
       console.error('Error cancelling enrollment:', error);
       throw error;
