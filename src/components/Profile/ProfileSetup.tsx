@@ -23,6 +23,7 @@ export const ProfileSetup: React.FC = () => {
     try {
       await profileService.upsertProfile(formData);
       // Profile created successfully - page will reload due to auth state change
+      window.location.reload(); // Force refresh to update app state
     } catch (err: any) {
       setError(err.message);
     } finally {
