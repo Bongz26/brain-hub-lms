@@ -1,13 +1,16 @@
 import React from 'react';
-import { AuthProvider } from './contexts/AuthContext';
-import AppContent from './AppContent';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import MatchingPage from './MatchingPage';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<MatchingPage />} />
+        <Route path="/course/:id" element={<div>Course Details (To be implemented)</div>} />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
