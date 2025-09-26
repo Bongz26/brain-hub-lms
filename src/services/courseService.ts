@@ -164,6 +164,8 @@ export const courseService = {
     }
   },
 
+
+
   // Check if user is enrolled in a course
   async isEnrolledInCourse(courseId: string): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -182,5 +184,60 @@ export const courseService = {
     } catch (error) {
       return false;
     }
+  },
+
+  // Create a new course (for tutors)
+async createCourse(courseData: {
+  subject_id: string;
+  title: string;
+  description: string;
+  grade_level: number;
+  price: number;
+  duration_weeks: number;
+  max_students: number;
+}): Promise<Course> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .insert({
+        tutor_id: user.id,
+        ...courseData,
+        is_active: true
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating course:', error);
+    throw error;
   }
+},
+
+// Update course
+async updateCourse(courseId: string, courseData: Partial<Course>): Promise<Course> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .update(courseData)
+      .eq('id', courseId)
+      .eq('tutor_id', user.id) // Ensure tutor owns the course
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating course:', error);
+    throw error;
+  }
+}
 };
+

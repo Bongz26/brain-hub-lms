@@ -6,6 +6,7 @@ import { Profile } from '../../types/profile';
 import { EditProfile } from '../Profile/EditProfile';
 import { CourseList } from '../Courses/CourseList';
 import { MyCourses } from '../Courses/MyCourses';
+import { TutorDashboard } from '../Tutor/TutorDashboard';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -44,6 +45,12 @@ export const Dashboard: React.FC = () => {
     );
   }
 
+  // Show Tutor Dashboard for tutors
+  if (profile?.role === 'tutor') {
+    return <TutorDashboard />;
+  }
+
+  // Show Student Dashboard for students
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navigation Header */}
@@ -142,11 +149,6 @@ export const Dashboard: React.FC = () => {
                     >
                       Browse Courses
                     </button>
-                    {profile?.role === 'tutor' && (
-                      <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition duration-200 font-medium">
-                        Create Course
-                      </button>
-                    )}
                     <button 
                       onClick={() => setCurrentView('my-courses')}
                       className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition duration-200 font-medium"
@@ -187,6 +189,14 @@ export const Dashboard: React.FC = () => {
                   </button>
                 )}
               </div>
+
+              {/* Recent Activity (Placeholder) */}
+              <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="font-semibold text-lg mb-4">Recent Activity</h3>
+                <p className="text-gray-600 text-center py-4">
+                  Your learning activity will appear here once you enroll in courses.
+                </p>
+              </div>
             </div>
           )}
 
@@ -208,3 +218,5 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+
+export default Dashboard;
