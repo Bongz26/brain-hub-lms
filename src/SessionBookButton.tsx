@@ -8,7 +8,9 @@ interface Props {
 const SessionBookButton: React.FC<Props> = ({ tutorId }) => {
   const handleBooking = async () => {
     try {
+      console.log('Booking for tutorId:', tutorId);
       const { error } = await supabase.rpc('increment_total_sessions', { tutor_id: tutorId });
+      console.log('RPC Error:', error);
       if (error) throw error;
       alert('Session booked successfully!');
     } catch (error) {

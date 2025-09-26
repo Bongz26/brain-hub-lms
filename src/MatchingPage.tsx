@@ -4,7 +4,6 @@ import { supabase } from './lib/supabase';
 import { Link } from 'react-router-dom';
 import SessionBookButton from './SessionBookButton';
 
-// Define types for form inputs and data
 interface FormInputs {
   subject: string;
   grade: string;
@@ -49,6 +48,7 @@ interface Course {
   tutor?: Tutor;
   profile?: Profile;
   subject?: Subject;
+  tutor_subjects?: { tutor_id: string; subject_id: string }[];
 }
 
 const MatchingPage: React.FC = () => {
@@ -63,7 +63,6 @@ const MatchingPage: React.FC = () => {
   const [filteredCourses, setFilteredCourses] = useState<(Course & { score: number })[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch courses with tutors, profiles, subjects, and tutor_subjects
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
@@ -108,13 +107,15 @@ const MatchingPage: React.FC = () => {
         `)
         .eq('is_active', true)
         .eq('profiles.role', 'tutor');
+      console.log('Raw Query Data:', data);
+      console.log('Query Error:', error);
       if (error) {
         console.error('Error fetching courses:', error);
       } else {
-        // Filter courses where tutor is linked to the subject via tutor_subjects
         const validCourses = data?.filter(course => 
-          course.tutor_subjects?.some(ts => ts.subject_id === course.subject_id)
+          !course.tutor_subjects || course.tutor_subjects.some(ts => ts.subject_id === course.subject_id)
         ) || [];
+        console.log('Valid Courses:', validCourses);
         setCourses(validCourses);
       }
       setLoading(false);
@@ -122,7 +123,6 @@ const MatchingPage: React.FC = () => {
     fetchCourses();
   }, []);
 
-  // Mock AI scoring function
   const calculateMatchScore = (course: Course, prefs: FormInputs): number => {
     let score = 0;
     const tutor = course.tutor;
@@ -137,7 +137,6 @@ const MatchingPage: React.FC = () => {
     return score;
   };
 
-  // Handle form submission
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
     const matches = courses
       .map((course) => ({
@@ -146,7 +145,7 @@ const MatchingPage: React.FC = () => {
       }))
       .filter((course) => course.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 3); // Show top 3 matches
+      .slice(0, 3);
     setFilteredCourses(matches);
   };
 
@@ -155,7 +154,6 @@ const MatchingPage: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-6">Find Your Perfect Course</h1>
         
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-lg shadow-md mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -166,8 +164,10 @@ const MatchingPage: React.FC = () => {
               >
                 <option value="">Select Subject</option>
                 <option value="Mathematics">Mathematics</option>
-                <option value="Physical Science">Physical Science</option>
-                <option value="English">English</option>
+                <option value="Physical Sciences">Physical Sciences</option>
+                <option value="English Home Language">English Home Language</option>
+                <option value="Natural Sciences">Natural Sciences</option>
+                <option value="Accounting">Accounting</option>
               </select>
               {errors.subject && <p className="text-red-500 text-sm">{errors.subject.message}</p>}
             </div>
@@ -178,6 +178,9 @@ const MatchingPage: React.FC = () => {
                 className="mt-1 block w-full p-2 border rounded-md"
               >
                 <option value="">Select Grade</option>
+                <option value="6">Grade 6</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
                 <option value="10">Grade 10</option>
                 <option value="11">Grade 11</option>
                 <option value="12">Grade 12</option>
@@ -192,8 +195,7 @@ const MatchingPage: React.FC = () => {
               >
                 <option value="">Select Location</option>
                 <option value="Phuthaditjhaba High">Phuthaditjhaba</option>
-                <option value="Harrismith Secondary">Harrismith</option>
-                <option value="Online Academy">Online</option>
+                <option value="University Of Cape TOwn">Cape Town</option>
               </select>
               {errors.location && <p className="text-red-500 text-sm">{errors.location.message}</p>}
             </div>
@@ -207,7 +209,6 @@ const MatchingPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Results */}
         {loading && <p className="text-center">Loading courses...</p>}
         {filteredCourses.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
