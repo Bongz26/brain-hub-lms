@@ -13,6 +13,7 @@ const MaterialDownloadButton: React.FC<Props> = ({ materialId }) => {
       alert('Download counted!');
     } catch (error) {
       console.error('Error updating download count:', error);
+      alert('Failed to count download. Please try again.');
     }
   };
 

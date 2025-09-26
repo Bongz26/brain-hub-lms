@@ -1,74 +1,159 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { supabase } from './lib/supabase'; // Adjust path to your Supabase client
+import { supabase } from './lib/supabase';
 import { Link } from 'react-router-dom';
+import SessionBookButton from './SessionBookButton';
 
-// Define types for form inputs and tutor data
+// Define types for form inputs and data
 interface FormInputs {
   subject: string;
   grade: string;
-  language: string;
   location: string;
+}
+
+interface Profile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  school_name: string;
+  bio: string;
+  avatar_url: string;
 }
 
 interface Tutor {
   id: string;
-  name: string;
-  subjects: string[];
-  language: string;
-  location: string;
-  bio: string;
-  photo_url: string;
+  qualifications: string;
+  experience_years: number;
+  hourly_rate: number;
+  availability: object;
+  is_verified: boolean;
+  rating: number;
+  total_sessions: number;
 }
 
-// Mock AI scoring function
-const calculateMatchScore = (tutor: Tutor, prefs: FormInputs): number => {
-  let score = 0;
-  if (tutor.subjects.includes(prefs.subject)) score += 40;
-  if (tutor.language === prefs.language) score += 30;
-  if (tutor.location === prefs.location) score += 20;
-  if (prefs.grade && tutor.subjects.some((s) => s.includes(prefs.grade))) score += 10;
-  return score;
-};
+interface Subject {
+  id: string;
+  name: string;
+  grade_levels: string[];
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  grade_level: number;
+  subject_id: string;
+  tutor_id: string;
+  price: number;
+  tutor?: Tutor;
+  profile?: Profile;
+  subject?: Subject;
+}
 
 const MatchingPage: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>();
-  const [tutors, setTutors] = useState<Tutor[]>([]);
-  const [filteredTutors, setFilteredTutors] = useState<(Tutor & { score: number })[]>([]);
+  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
+    defaultValues: {
+      subject: '',
+      grade: '',
+      location: '',
+    },
+  });
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<(Course & { score: number })[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch tutors from Supabase on mount
+  // Fetch courses with tutors, profiles, subjects, and tutor_subjects
   useEffect(() => {
-    const fetchTutors = async () => {
+    const fetchCourses = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from('tutors').select('*');
+      const { data, error } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          title,
+          description,
+          grade_level,
+          subject_id,
+          tutor_id,
+          price,
+          tutors (
+            id,
+            qualifications,
+            experience_years,
+            hourly_rate,
+            availability,
+            is_verified,
+            rating,
+            total_sessions
+          ),
+          profiles (
+            id,
+            first_name,
+            last_name,
+            role,
+            school_name,
+            bio,
+            avatar_url
+          ),
+          subjects (
+            id,
+            name,
+            grade_levels
+          ),
+          tutor_subjects (
+            tutor_id,
+            subject_id
+          )
+        `)
+        .eq('is_active', true)
+        .eq('profiles.role', 'tutor');
       if (error) {
-        console.error('Error fetching tutors:', error);
+        console.error('Error fetching courses:', error);
       } else {
-        setTutors(data || []);
+        // Filter courses where tutor is linked to the subject via tutor_subjects
+        const validCourses = data?.filter(course => 
+          course.tutor_subjects?.some(ts => ts.subject_id === course.subject_id)
+        ) || [];
+        setCourses(validCourses);
       }
       setLoading(false);
     };
-    fetchTutors();
+    fetchCourses();
   }, []);
+
+  // Mock AI scoring function
+  const calculateMatchScore = (course: Course, prefs: FormInputs): number => {
+    let score = 0;
+    const tutor = course.tutor;
+    const profile = course.profile;
+    const subject = course.subject;
+    if (!tutor || !profile || !subject) return score;
+    if (subject.name === prefs.subject) score += 40;
+    if (subject.grade_levels.includes(prefs.grade)) score += 30;
+    if (profile.school_name === prefs.location) score += 20;
+    if (tutor.is_verified) score += 5;
+    if (tutor.rating >= 4.0) score += 5;
+    return score;
+  };
 
   // Handle form submission
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
-    const matches = tutors
-      .map((tutor) => ({
-        ...tutor,
-        score: calculateMatchScore(tutor, data),
+    const matches = courses
+      .map((course) => ({
+        ...course,
+        score: calculateMatchScore(course, data),
       }))
-      .filter((tutor) => tutor.score > 0)
+      .filter((course) => course.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 3); // Show top 3 matches
-    setFilteredTutors(matches);
+    setFilteredCourses(matches);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-6">Find Your Perfect Tutor</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Find Your Perfect Course</h1>
         
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -93,24 +178,11 @@ const MatchingPage: React.FC = () => {
                 className="mt-1 block w-full p-2 border rounded-md"
               >
                 <option value="">Select Grade</option>
-                <option value="Grade 10">Grade 10</option>
-                <option value="Grade 11">Grade 11</option>
-                <option value="Grade 12">Grade 12</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
               </select>
               {errors.grade && <p className="text-red-500 text-sm">{errors.grade.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Language</label>
-              <select
-                {...register('language', { required: 'Language is required' })}
-                className="mt-1 block w-full p-2 border rounded-md"
-              >
-                <option value="">Select Language</option>
-                <option value="Zulu">Zulu</option>
-                <option value="Sotho">Sotho</option>
-                <option value="English">English</option>
-              </select>
-              {errors.language && <p className="text-red-500 text-sm">{errors.language.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Location</label>
@@ -119,9 +191,9 @@ const MatchingPage: React.FC = () => {
                 className="mt-1 block w-full p-2 border rounded-md"
               >
                 <option value="">Select Location</option>
-                <option value="Phuthaditjhaba">Phuthaditjhaba</option>
-                <option value="Harrismith">Harrismith</option>
-                <option value="Online">Online</option>
+                <option value="Phuthaditjhaba High">Phuthaditjhaba</option>
+                <option value="Harrismith Secondary">Harrismith</option>
+                <option value="Online Academy">Online</option>
               </select>
               {errors.location && <p className="text-red-500 text-sm">{errors.location.message}</p>}
             </div>
@@ -131,39 +203,45 @@ const MatchingPage: React.FC = () => {
             className="mt-4 w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
             disabled={loading}
           >
-            {loading ? 'Searching...' : 'Find Tutors'}
+            {loading ? 'Searching...' : 'Find Courses'}
           </button>
         </form>
 
         {/* Results */}
-        {loading && <p className="text-center">Loading tutors...</p>}
-        {filteredTutors.length > 0 && (
+        {loading && <p className="text-center">Loading courses...</p>}
+        {filteredCourses.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {filteredTutors.map((tutor) => (
-              <div key={tutor.id} className="bg-white p-4 rounded-lg shadow-md">
+            {filteredCourses.map((course) => (
+              <div key={course.id} className="bg-white p-4 rounded-lg shadow-md">
                 <img
-                  src={tutor.photo_url || 'https://via.placeholder.com/150'}
-                  alt={tutor.name}
+                  src={course.profile?.avatar_url || 'https://via.placeholder.com/150'}
+                  alt={`${course.profile?.first_name || 'Tutor'} ${course.profile?.last_name || ''}`}
                   className="w-24 h-24 rounded-full mx-auto mb-4"
                 />
-                <h2 className="text-xl font-semibold text-center">{tutor.name}</h2>
-                <p className="text-gray-600">Subjects: {tutor.subjects.join(', ')}</p>
-                <p className="text-gray-600">Language: {tutor.language}</p>
-                <p className="text-gray-600">Location: {tutor.location}</p>
-                <p className="text-gray-600">Match Score: <span className="text-green-600">{tutor.score}%</span></p>
-                <p className="text-gray-500 text-sm mt-2">{tutor.bio}</p>
+                <h2 className="text-xl font-semibold text-center">{course.title}</h2>
+                <p className="text-gray-600">Tutor: {course.profile ? `${course.profile.first_name} ${course.profile.last_name}` : 'Unknown'}</p>
+                <p className="text-gray-600">Subject: {course.subject?.name || 'N/A'}</p>
+                <p className="text-gray-600">Grade: {course.grade_level}</p>
+                <p className="text-gray-600">Location: {course.profile?.school_name || 'N/A'}</p>
+                <p className="text-gray-600">Price: R{course.price}</p>
+                <p className="text-gray-600">Hourly Rate: R{course.tutor?.hourly_rate || 'N/A'}</p>
+                <p className="text-gray-600">Rating: {course.tutor?.rating || 'N/A'}/5</p>
+                <p className="text-gray-600">Verified: {course.tutor?.is_verified ? 'Yes' : 'No'}</p>
+                <p className="text-gray-600">Match Score: <span className="text-green-600">{course.score}%</span></p>
+                <p className="text-gray-500 text-sm mt-2">{course.description}</p>
                 <Link
-                  to={`/tutor/${tutor.id}`}
+                  to={`/course/${course.id}`}
                   className="block mt-4 text-center bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
                 >
-                  Book Now
+                  Enroll Now
                 </Link>
+                <SessionBookButton tutorId={course.tutor_id} />
               </div>
             ))}
           </div>
         )}
-        {filteredTutors.length === 0 && !loading && (
-          <p className="text-center text-gray-600">No tutors found. Try different filters.</p>
+        {filteredCourses.length === 0 && !loading && (
+          <p className="text-center text-gray-600">No courses found. Try different filters.</p>
         )}
       </div>
     </div>
