@@ -11,7 +11,6 @@ interface FormInputs {
 }
 
 interface Profile {
-  id: string;
   first_name: string;
   last_name: string;
   role: string;
@@ -21,7 +20,6 @@ interface Profile {
 }
 
 interface Tutor {
-  id: string;
   qualifications: string;
   experience_years: number;
   hourly_rate: number;
@@ -32,9 +30,8 @@ interface Tutor {
 }
 
 interface Subject {
-  id: string;
   name: string;
-  grade_levels: string[];
+  grade_levels: number[];
 }
 
 interface Course {
@@ -45,10 +42,10 @@ interface Course {
   subject_id: string;
   tutor_id: string;
   price: number;
-  tutor?: Tutor;
+  is_active: boolean;
   profile?: Profile;
+  tutor?: Tutor;
   subject?: Subject;
-  tutor_subjects?: { tutor_id: string; subject_id: string }[];
 }
 
 const MatchingPage: React.FC = () => {
@@ -69,54 +66,17 @@ const MatchingPage: React.FC = () => {
       const { data, error } = await supabase
         .from('courses')
         .select(`
-          id,
-          title,
-          description,
-          grade_level,
-          subject_id,
-          tutor_id,
-          price,
-          tutors (
-            id,
-            qualifications,
-            experience_years,
-            hourly_rate,
-            availability,
-            is_verified,
-            rating,
-            total_sessions
-          ),
-          profiles (
-            id,
-            first_name,
-            last_name,
-            role,
-            school_name,
-            bio,
-            avatar_url
-          ),
-          subjects (
-            id,
-            name,
-            grade_levels
-          ),
-          tutor_subjects (
-            tutor_id,
-            subject_id
-          )
+          id, title, description, grade_level, subject_id, tutor_id, price, is_active,
+          profiles(first_name, last_name, role, school_name, bio, avatar_url),
+          tutors(qualifications, experience_years, hourly_rate, availability, is_verified, rating, total_sessions),
+          subjects(name, grade_levels)
         `)
-        .eq('is_active', true)
-        .eq('profiles.role', 'tutor');
-      console.log('Raw Query Data:', data);
-      console.log('Query Error:', error);
+        .eq('is_active', true);
+      console.log('Raw Query Data (Post-Fetch):', data); // Moved after setLoading(false) for clarity
       if (error) {
         console.error('Error fetching courses:', error);
       } else {
-        const validCourses = data?.filter(course => 
-          !course.tutor_subjects || course.tutor_subjects.some(ts => ts.subject_id === course.subject_id)
-        ) || [];
-        console.log('Valid Courses:', validCourses);
-        setCourses(validCourses);
+        setCourses(data || []);
       }
       setLoading(false);
     };
@@ -128,12 +88,14 @@ const MatchingPage: React.FC = () => {
     const tutor = course.tutor;
     const profile = course.profile;
     const subject = course.subject;
+    console.log('Course:', course, 'Prefs:', prefs); // Debug log
     if (!tutor || !profile || !subject) return score;
-    if (subject.name === prefs.subject) score += 40;
-    if (subject.grade_levels.includes(prefs.grade)) score += 30;
-    if (profile.school_name === prefs.location) score += 20;
+    if (subject.name.toLowerCase() === prefs.subject.toLowerCase()) score += 40;
+    if (subject.grade_levels.includes(parseInt(prefs.grade))) score += 30; // Convert string to number
+    if (profile.school_name.toLowerCase() === prefs.location.toLowerCase()) score += 20;
     if (tutor.is_verified) score += 5;
     if (tutor.rating >= 4.0) score += 5;
+    console.log('Score for', course.title, ':', score); // Debug score
     return score;
   };
 

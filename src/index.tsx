@@ -11,7 +11,8 @@ root.render(
   </React.StrictMode>
 );
 
-// Register service worker
+// Temporarily disable service worker in development
+/*
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
@@ -19,5 +20,6 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Service Worker Error', err));
   });
 }
+*/
 
 reportWebVitals();
