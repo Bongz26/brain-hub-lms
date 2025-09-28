@@ -8,21 +8,20 @@ export const MaterialsManager: React.FC = () => {
   const [materials, setMaterials] = useState<TutorMaterial[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{materialId: string, filePath: string, title: string} | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ materialId: string; filePath: string; title: string } | null>(null);
   const [newMaterial, setNewMaterial] = useState({
     title: '',
     subject: '',
     gradeLevel: 10,
-    fileType: 'notes' as 'notes' | 'worksheet' | 'presentation' | 'video' | 'guide'
+    fileType: 'notes' as 'notes' | 'worksheet' | 'presentation' | 'video' | 'guide',
   });
 
   useEffect(() => {
     loadMaterials();
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMaterials = async () => {
     if (!user) return;
-    
     try {
       const tutorMaterials = await fileService.getTutorMaterials(user.id);
       setMaterials(tutorMaterials);
@@ -37,7 +36,6 @@ export const MaterialsManager: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate form
     if (!newMaterial.title.trim() || !newMaterial.subject.trim()) {
       alert('Please provide a title and subject for the material.');
       return;
@@ -46,26 +44,14 @@ export const MaterialsManager: React.FC = () => {
     setUploading(true);
     try {
       await fileService.uploadMaterial(file, user.id, newMaterial);
-      
-      // Refresh materials list
       await loadMaterials();
-      
-      // Reset form
-      setNewMaterial({
-        title: '',
-        subject: '',
-        gradeLevel: 10,
-        fileType: 'notes'
-      });
-      
+      setNewMaterial({ title: '', subject: '', gradeLevel: 10, fileType: 'notes' });
       alert('🎉 Material uploaded successfully!');
     } catch (error: any) {
       alert('Upload failed: ' + error.message);
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -78,7 +64,6 @@ export const MaterialsManager: React.FC = () => {
       setShowDeleteConfirm(null);
       return;
     }
-
     try {
       await fileService.deleteMaterial(showDeleteConfirm.materialId, showDeleteConfirm.filePath);
       await loadMaterials();
@@ -94,16 +79,12 @@ export const MaterialsManager: React.FC = () => {
     try {
       const downloadUrl = await fileService.getDownloadUrl(material.file_path);
       await fileService.incrementDownloadCount(material.id);
-      
-      // Create temporary link for download
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = material.file_name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Refresh to update download count
       await loadMaterials();
     } catch (error: any) {
       alert('Download failed: ' + error.message);
@@ -132,7 +113,7 @@ export const MaterialsManager: React.FC = () => {
     return new Date(dateString).toLocaleDateString('en-ZA', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -146,7 +127,6 @@ export const MaterialsManager: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md mx-4">
@@ -157,13 +137,13 @@ export const MaterialsManager: React.FC = () => {
             <div className="flex space-x-4 justify-end">
               <button
                 onClick={() => handleDeleteConfirm(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded"
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDeleteConfirm(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-medium"
               >
                 Yes, Delete
               </button>
@@ -177,54 +157,49 @@ export const MaterialsManager: React.FC = () => {
         <span className="text-sm text-gray-600">{materials.length} materials</span>
       </div>
 
-      {/* Upload Section */}
       <div className="bg-blue-50 p-6 rounded-lg mb-6 border-2 border-dashed border-blue-200">
         <h3 className="font-semibold mb-4 text-lg text-blue-900">Share New Material</h3>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
             <input
               type="text"
-              className="w-full border border-gray-300 rounded p-2"
+              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Algebra Worksheet 1"
               value={newMaterial.title}
-              onChange={(e) => setNewMaterial({...newMaterial, title: e.target.value})}
+              onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
             <input
               type="text"
-              className="w-full border border-gray-300 rounded p-2"
+              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Mathematics"
               value={newMaterial.subject}
-              onChange={(e) => setNewMaterial({...newMaterial, subject: e.target.value})}
+              onChange={(e) => setNewMaterial({ ...newMaterial, subject: e.target.value })}
             />
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Grade Level</label>
             <select
-              className="w-full border border-gray-300 rounded p-2"
+              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
               value={newMaterial.gradeLevel}
-              onChange={(e) => setNewMaterial({...newMaterial, gradeLevel: parseInt(e.target.value)})}
+              onChange={(e) => setNewMaterial({ ...newMaterial, gradeLevel: parseInt(e.target.value) })}
             >
               {Array.from({ length: 9 }, (_, i) => i + 4).map(grade => (
                 <option key={grade} value={grade}>Grade {grade}</option>
               ))}
             </select>
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Material Type</label>
             <select
-              className="w-full border border-gray-300 rounded p-2"
+              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
               value={newMaterial.fileType}
-              onChange={(e) => setNewMaterial({...newMaterial, fileType: e.target.value as any})}
+              onChange={(e) => setNewMaterial({ ...newMaterial, fileType: e.target.value as any })}
             >
               <option value="notes">Notes</option>
               <option value="worksheet">Worksheet</option>
@@ -234,7 +209,6 @@ export const MaterialsManager: React.FC = () => {
             </select>
           </div>
         </div>
-
         <div className="flex items-center space-x-4">
           <input
             type="file"
@@ -257,7 +231,6 @@ export const MaterialsManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Materials List */}
       <div className="space-y-4">
         {materials.map(material => (
           <div key={material.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -267,24 +240,23 @@ export const MaterialsManager: React.FC = () => {
                 <div className="flex-1">
                   <h4 className="font-semibold text-lg text-gray-900">{material.title}</h4>
                   <div className="flex flex-wrap gap-2 text-sm text-gray-600 mt-2">
-                    <span className="bg-gray-100 px-2 py-1 rounded">📄 {material.file_name}</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">💾 {formatFileSize(material.file_size)}</span>
-                    <span className="bg-blue-100 px-2 py-1 rounded">📚 {material.subject}</span>
-                    <span className="bg-green-100 px-2 py-1 rounded">🎓 Grade {material.grade_level}</span>
-                    <span className="bg-purple-100 px-2 py-1 rounded">⬇️ {material.download_count} downloads</span>
-                    <span className="bg-yellow-100 px-2 py-1 rounded">📅 {formatDate(material.created_at)}</span>
+                    <span className="bg-gray-100 px-2 py-1 rounded">{material.file_name}</span>
+                    <span className="bg-gray-100 px-2 py-1 rounded">{formatFileSize(material.file_size)}</span>
+                    <span className="bg-blue-100 px-2 py-1 rounded">{material.subject}</span>
+                    <span className="bg-green-100 px-2 py-1 rounded">Grade {material.grade_level}</span>
+                    <span className="bg-purple-100 px-2 py-1 rounded">{material.download_count} downloads</span>
+                    <span className="bg-yellow-100 px-2 py-1 rounded">{formatDate(material.created_at)}</span>
                   </div>
                 </div>
               </div>
-              
               <div className="flex space-x-2 ml-4">
-                <button 
+                <button
                   onClick={() => handleDownload(material)}
                   className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 font-medium"
                 >
                   Download
                 </button>
-                <button 
+                <button
                   onClick={() => handleDeleteClick(material.id, material.file_path, material.title)}
                   className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 font-medium"
                 >
@@ -294,7 +266,6 @@ export const MaterialsManager: React.FC = () => {
             </div>
           </div>
         ))}
-        
         {materials.length === 0 && (
           <div className="text-center py-12 text-gray-500 bg-white rounded-lg border border-gray-200">
             <div className="text-6xl mb-4">📚</div>
@@ -306,3 +277,5 @@ export const MaterialsManager: React.FC = () => {
     </div>
   );
 };
+
+export default MaterialsManager;

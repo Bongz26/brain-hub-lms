@@ -1,28 +1,28 @@
+// SessionBookButton.tsx
 import React from 'react';
-import { supabase } from './lib/supabase';
+
+interface Availability {
+  id: string;
+  tutor_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
 
 interface Props {
   tutorId: string;
+  availability?: Availability[]; // Make optional if not always provided
 }
 
-const SessionBookButton: React.FC<Props> = ({ tutorId }) => {
-  const handleBooking = async () => {
-    try {
-      console.log('Booking for tutorId:', tutorId);
-      const { error } = await supabase.rpc('increment_total_sessions', { tutor_id: tutorId });
-      console.log('RPC Error:', error);
-      if (error) throw error;
-      alert('Session booked successfully!');
-    } catch (error) {
-      console.error('Error booking session:', error);
-      alert('Failed to book session. Please try again.');
-    }
-  };
+const SessionBookButton: React.FC<Props> = ({ tutorId, availability }) => {
+  // Example: Disable button if no availability
+  const isAvailable = availability?.some(a => a.is_available) || false;
 
   return (
     <button
-      onClick={handleBooking}
-      className="mt-2 block w-full text-center bg-green-600 text-white p-2 rounded-md hover:bg-green-700"
+      className="block w-full text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+      disabled={!isAvailable}
     >
       Book Session
     </button>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
-import { Login } from './components/Auth/Login';
-import { Dashboard } from './components/Dashboard/Dashboard';
+
+
+import Dashboard from './components/Dashboard/Dashboard'
 import { ProfileSetup } from './components/Profile/ProfileSetup';
 import { profileService } from './services/profileService';
 
@@ -66,9 +67,9 @@ const AppContent: React.FC = () => {
   }
 
   // Show login if no user
-  if (!user) {
+  /*if (!user) {
     return <Login />;
-  }
+  }*/
 
   // Show profile setup if no profile
   if (!profileExists) {

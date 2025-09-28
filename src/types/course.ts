@@ -24,6 +24,7 @@ export interface Course {
     first_name: string;
     last_name: string;
   };
+  enrollments?: Enrollment[];
 }
 
 export interface Enrollment {

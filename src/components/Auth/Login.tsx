@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useNavigate, Link } from 'react-router-dom';
 
-export const Login: React.FC = () => {
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  console.log('Login component rendering...');
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,20 +15,15 @@ export const Login: React.FC = () => {
     setError(null);
 
     try {
-      console.log('Attempting login with:', email);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
-      if (error) {
-        console.error('Login error:', error);
-        throw error;
-      }
-      
-      console.log('Login successful!');
+      if (error) throw error;
+
+      // The AuthProvider will handle the redirect automatically
+      // No need to manually navigate here
     } catch (err: any) {
-      console.error('Login caught error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -79,8 +74,6 @@ export const Login: React.FC = () => {
             </button>
           </div>
         </form>
-        
-        {/* Test credentials button */}
         <div className="text-center">
           <button
             onClick={() => {
@@ -92,7 +85,14 @@ export const Login: React.FC = () => {
             Fill Test Credentials
           </button>
         </div>
+        <div className="text-center">
+          <Link to="/signup" className="text-blue-600 hover:text-blue-800">
+            Create a new student account
+          </Link>
+        </div>
       </div>
     </div>
   );
 };
+
+export default Login;
