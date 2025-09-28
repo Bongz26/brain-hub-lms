@@ -48,6 +48,15 @@ interface Subject {
   grade_levels: number[];
 }
 
+interface Review {
+  id: string;
+  user_id: string;
+  course_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
 const MatchingPage: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
     defaultValues: {
@@ -60,26 +69,31 @@ const MatchingPage: React.FC = () => {
   const [tutors, setTutors] = useState<Record<string, Tutor>>({});
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [subjects, setSubjects] = useState<Record<string, Subject>>({});
+  const [reviews, setReviews] = useState<Record<string, Review[]>>({});
   const [filteredCourses, setFilteredCourses] = useState<(Course & { score: number })[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch user
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+
         // Fetch courses
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('*')
           .eq('is_active', true);
-
         if (coursesError) {
           console.error('Error fetching courses:', coursesError);
           return;
         }
-
         console.log('Courses loaded:', coursesData);
         setCourses(coursesData || []);
 
@@ -87,7 +101,6 @@ const MatchingPage: React.FC = () => {
         const { data: tutorsData, error: tutorsError } = await supabase
           .from('tutors')
           .select('*');
-
         if (tutorsError) {
           console.error('Error fetching tutors:', tutorsError);
         } else {
@@ -98,12 +111,11 @@ const MatchingPage: React.FC = () => {
           setTutors(tutorsMap);
         }
 
-        // Fetch profiles (tutors' profiles)
+        // Fetch profiles
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('*')
           .eq('role', 'tutor');
-
         if (profilesError) {
           console.error('Error fetching profiles:', profilesError);
         } else {
@@ -118,7 +130,6 @@ const MatchingPage: React.FC = () => {
         const { data: subjectsData, error: subjectsError } = await supabase
           .from('subjects')
           .select('*');
-
         if (subjectsError) {
           console.error('Error fetching subjects:', subjectsError);
         } else {
@@ -129,6 +140,20 @@ const MatchingPage: React.FC = () => {
           setSubjects(subjectsMap);
         }
 
+        // Fetch reviews
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from('reviews')
+          .select('*');
+        if (reviewsError) {
+          console.error('Error fetching reviews:', reviewsError);
+        } else {
+          const reviewsMap = reviewsData?.reduce((acc, review) => {
+            if (!acc[review.course_id]) acc[review.course_id] = [];
+            acc[review.course_id].push(review);
+            return acc;
+          }, {} as Record<string, Review[]>) || {};
+          setReviews(reviewsMap);
+        }
       } catch (err) {
         console.error('Unexpected error:', err);
       } finally {
@@ -138,29 +163,22 @@ const MatchingPage: React.FC = () => {
     fetchData();
   }, []);
 
-  // Safe placeholder image URL that won't cause errors
   const getSafeAvatarUrl = (course: Course): string => {
     const profile = profiles[course.tutor_id];
     if (profile?.avatar_url) {
       return profile.avatar_url;
     }
-    // Use a data URL for placeholder
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjMwIiBmaWxsPSIjOEU5MEE2Ii8+CjxwYXRoIGQ9Ik0wIDE1MEMwIDEzMyA0My4zMzMzIDEyNS43NSw3NSAxMjUuNzVDMTA2LjY2NyAxMjUuNzUsMTUwIDEzMyAxNTAgMTUwSDBaIiBmaWxsPSIjOEU5MEE2Ii8+Cjwvc3ZnPgo=';
   };
 
-  // Handle image errors properly without infinite loops
   const handleImageError = (courseId: string) => {
     setImageErrors(prev => new Set(prev).add(courseId));
   };
 
-  // Extract grade level from course title (more reliable than the database field)
   const getGradeFromTitle = (course: Course): number => {
     const title = course.title.toLowerCase();
-    
-    // Look for grade patterns in the title
     const gradeMatch = title.match(/grade\s*(\d+)|gr\s*(\d+)|g\s*(\d+)/i);
     if (gradeMatch) {
-      // Return the first captured group that has a number
       for (let i = 1; i <= 3; i++) {
         if (gradeMatch[i]) {
           const grade = parseInt(gradeMatch[i]);
@@ -168,25 +186,19 @@ const MatchingPage: React.FC = () => {
         }
       }
     }
-    
-    // Fallback: look for numbers that might represent grades
     const numberMatch = title.match(/\b(\d+)\b/);
     if (numberMatch) {
       const grade = parseInt(numberMatch[1]);
       if (grade >= 1 && grade <= 12) return grade;
     }
-    
-    // Final fallback: use the database field (even though it's incorrect)
     return course.grade_level;
   };
 
-  // Helper to get subject name from course
   const getSubjectName = (course: Course): string => {
     const subject = subjects[course.subject_id];
     if (subject?.name) {
       return subject.name;
     }
-    // Fallback to detecting from title
     const title = course.title.toLowerCase();
     if (title.includes('math') || title.includes('algebra')) return 'Mathematics';
     if (title.includes('science') && title.includes('physical')) return 'Physical Sciences';
@@ -196,22 +208,15 @@ const MatchingPage: React.FC = () => {
     return 'Unknown';
   };
 
-  // Helper to get grade levels from course - FIXED VERSION
   const getGradeLevels = (course: Course): number[] => {
-    // First try to get grade from title (more accurate)
     const titleGrade = getGradeFromTitle(course);
-    
-    // Then try subject grade levels
     const subject = subjects[course.subject_id];
     if (subject?.grade_levels) {
       return subject.grade_levels;
     }
-    
-    // Fallback to the grade from title or database
     return [titleGrade];
   };
 
-  // Helper to get school name from course
   const getSchoolName = (course: Course): string => {
     const profile = profiles[course.tutor_id];
     if (profile?.school_name) {
@@ -220,19 +225,16 @@ const MatchingPage: React.FC = () => {
     return 'Unknown School';
   };
 
-  // Helper to get tutor verification status
   const getIsVerified = (course: Course): boolean => {
     const tutor = tutors[course.tutor_id];
     return tutor?.is_verified || false;
   };
 
-  // Helper to get tutor rating
   const getRating = (course: Course): number => {
     const tutor = tutors[course.tutor_id];
     return tutor?.rating ? parseFloat(tutor.rating.toString()) : 0;
   };
 
-  // Helper to get tutor name
   const getTutorName = (course: Course): string => {
     const profile = profiles[course.tutor_id];
     if (profile?.first_name && profile?.last_name) {
@@ -241,30 +243,33 @@ const MatchingPage: React.FC = () => {
     return 'Unknown Tutor';
   };
 
-  // Helper to get tutor experience
   const getExperienceYears = (course: Course): number => {
     const tutor = tutors[course.tutor_id];
     return tutor?.experience_years || 0;
   };
 
-  // Helper to get hourly rate
   const getHourlyRate = (course: Course): number => {
     const tutor = tutors[course.tutor_id];
     return tutor?.hourly_rate ? parseFloat(tutor.hourly_rate.toString()) : 0;
   };
 
+  const getAverageRating = (courseId: string): number => {
+    const courseReviews = reviews[courseId] || [];
+    if (courseReviews.length === 0) return 0;
+    const total = courseReviews.reduce((sum, review) => sum + review.rating, 0);
+    return parseFloat((total / courseReviews.length).toFixed(1));
+  };
+
   const calculateMatchScore = (course: Course, prefs: FormInputs): number => {
     let score = 0;
-    
     const subjectName = getSubjectName(course);
     const gradeLevels = getGradeLevels(course);
     const schoolName = getSchoolName(course);
     const isVerified = getIsVerified(course);
     const rating = getRating(course);
-    
     console.log('Scoring course:', course.title);
     console.log('Course subject:', subjectName);
-    console.log('Course grade levels (from title):', gradeLevels);
+    console.log('Course grade levels:', gradeLevels);
     console.log('Course school:', schoolName);
     console.log('Course verified:', isVerified);
     console.log('Course rating:', rating);
@@ -280,10 +285,35 @@ const MatchingPage: React.FC = () => {
     return score;
   };
 
+  const submitReview = async (e: React.FormEvent, courseId: string) => {
+    e.preventDefault();
+    if (!user) {
+      alert('Please log in to submit a review.');
+      return;
+    }
+    const rating = (document.getElementById(`rating-${courseId}`) as HTMLInputElement)?.value;
+    const comment = (document.getElementById(`comment-${courseId}`) as HTMLTextAreaElement)?.value;
+    if (!rating || parseInt(rating) < 1 || parseInt(rating) > 5) {
+      alert('Please select a valid rating (1-5).');
+      return;
+    }
+    const { error } = await supabase
+      .from('reviews')
+      .insert({ user_id: user.id, course_id: courseId, rating: parseInt(rating), comment });
+    if (error) {
+      console.error('Error submitting review:', error.message);
+    } else {
+      const { data } = await supabase.from('reviews').select('*').eq('course_id', courseId);
+      setReviews(prev => ({ ...prev, [courseId]: data || [] }));
+      (document.getElementById(`rating-${courseId}`) as HTMLInputElement).value = '';
+      (document.getElementById(`comment-${courseId}`) as HTMLTextAreaElement).value = '';
+      setSelectedCourse(null);
+    }
+  };
+
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
     console.log('Form submitted with data:', data);
     setHasSearched(true);
-    
     if (courses.length === 0) {
       console.log('No courses available to search');
       setFilteredCourses([]);
@@ -303,7 +333,6 @@ const MatchingPage: React.FC = () => {
     setFilteredCourses(matches);
   };
 
-  // Display the actual grade being used for matching
   const getDisplayGrade = (course: Course): string => {
     const gradeLevels = getGradeLevels(course);
     return `Grade ${gradeLevels[0]}`;
@@ -419,7 +448,7 @@ const MatchingPage: React.FC = () => {
                       <span className="font-medium">Hourly Rate:</span> R{getHourlyRate(course).toFixed(2)}
                     </p>
                     <p className="text-gray-600">
-                      <span className="font-medium">Rating:</span> {getRating(course).toFixed(1)}/5
+                      <span className="font-medium">Rating:</span> {getAverageRating(course.id)}/5
                     </p>
                     <p className="text-gray-600">
                       <span className="font-medium">Verified:</span> 
@@ -446,6 +475,12 @@ const MatchingPage: React.FC = () => {
                       View Course Details
                     </Link>
                     <SessionBookButton tutorId={course.tutor_id} />
+                    <button
+                      onClick={() => setSelectedCourse(course)}
+                      className="block w-full text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Add Review
+                    </button>
                   </div>
                 </div>
               ))}
@@ -473,6 +508,50 @@ const MatchingPage: React.FC = () => {
             <p className="text-gray-500 mt-2">
               We have {courses.length} active courses available.
             </p>
+          </div>
+        )}
+
+        {selectedCourse && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full">
+              <h2 className="text-2xl font-bold mb-4">Review for {selectedCourse.title}</h2>
+              <form onSubmit={(e) => submitReview(e, selectedCourse.id)}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Rating (1-5)</label>
+                  <input
+                    type="number"
+                    id={`rating-${selectedCourse.id}`}
+                    min="1"
+                    max="5"
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Comment</label>
+                  <textarea
+                    id={`comment-${selectedCourse.id}`}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    rows={4}
+                  />
+                </div>
+                <div className="flex justify-end space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCourse(null)}
+                    className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                  >
+                    Submit Review
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>
