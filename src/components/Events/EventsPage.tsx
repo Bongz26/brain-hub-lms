@@ -31,14 +31,41 @@ export const EventsPage: React.FC = () => {
   const loadEvents = async () => {
     if (!user) return;
 
-    // Mock events for demonstration
+    // Generate dates for 2025
+    const today = new Date('2025-10-01'); // October 1, 2025 for demo
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const twoWeeks = new Date(today);
+    twoWeeks.setDate(twoWeeks.getDate() + 14);
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const lastMonth = new Date(today);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    // Mock events for demonstration - 2025 with upcoming events
     const mockEvents: Event[] = [
       {
         id: '1',
+        title: 'Digital Learning Workshop',
+        description: 'Learn about the latest educational technology tools and platforms. Perfect for students and parents wanting to maximize online learning!',
+        type: 'academic',
+        date: tomorrow.toISOString().split('T')[0],
+        time: '02:00 PM',
+        location: 'Brain Hub LMS Virtual Classroom',
+        organizer: 'Brain Hub LMS Team',
+        attendees: 45,
+        maxAttendees: 100,
+        isRegistered: false,
+        image: 'https://via.placeholder.com/400x200?text=Digital+Workshop'
+      },
+      {
+        id: '2',
         title: 'School Sports Day',
         description: 'Annual sports competition featuring various athletic events. All students are encouraged to participate!',
         type: 'sports',
-        date: '2024-02-15',
+        date: nextWeek.toISOString().split('T')[0],
         time: '08:00 AM',
         location: 'QwaQwa Stadium, Phuthaditjhaba',
         organizer: 'Physical Education Department',
@@ -48,11 +75,24 @@ export const EventsPage: React.FC = () => {
         image: 'https://via.placeholder.com/400x200?text=Sports+Day'
       },
       {
-        id: '2',
-        title: 'Science Fair 2024',
-        description: 'Students showcase their innovative science projects and experiments',
+        id: '3',
+        title: 'Parent-Teacher Conference',
+        description: 'Quarterly meeting to discuss student progress, challenges, and upcoming term plans. Individual sessions available.',
+        type: 'announcement',
+        date: nextWeek.toISOString().split('T')[0],
+        time: '02:00 PM',
+        location: 'Phuthaditjhaba High School',
+        organizer: 'School Administration',
+        attendees: 112,
+        maxAttendees: 150,
+        isRegistered: false
+      },
+      {
+        id: '4',
+        title: 'Science Fair 2025',
+        description: 'Students showcase their innovative science projects and experiments. Awards for best projects in each category!',
         type: 'academic',
-        date: '2024-02-20',
+        date: twoWeeks.toISOString().split('T')[0],
         time: '10:00 AM',
         location: 'Community Hall, Phuthaditjhaba',
         organizer: 'Science Department',
@@ -62,23 +102,11 @@ export const EventsPage: React.FC = () => {
         image: 'https://via.placeholder.com/400x200?text=Science+Fair'
       },
       {
-        id: '3',
-        title: 'Parent-Teacher Meeting',
-        description: 'Quarterly meeting to discuss student progress and upcoming term plans',
-        type: 'announcement',
-        date: '2024-02-25',
-        time: '02:00 PM',
-        location: 'Phuthaditjhaba High School',
-        organizer: 'School Administration',
-        attendees: 112,
-        isRegistered: false
-      },
-      {
-        id: '4',
+        id: '5',
         title: 'Mathematics Olympiad',
-        description: 'Inter-school mathematics competition for grades 8-12',
+        description: 'Inter-school mathematics competition for grades 8-12. Test your problem-solving skills!',
         type: 'academic',
-        date: '2024-03-05',
+        date: twoWeeks.toISOString().split('T')[0],
         time: '09:00 AM',
         location: 'Thabo Mofutsanyana Hall, QwaQwa',
         organizer: 'Mathematics Department',
@@ -88,11 +116,25 @@ export const EventsPage: React.FC = () => {
         image: 'https://via.placeholder.com/400x200?text=Math+Olympiad'
       },
       {
-        id: '5',
-        title: 'Cultural Day Celebration',
-        description: 'Celebrate diversity with performances, food, and cultural displays',
+        id: '6',
+        title: 'Career Guidance Day',
+        description: 'Meet professionals from various industries and learn about career opportunities. Perfect for grade 11 & 12 students!',
         type: 'social',
-        date: '2024-03-15',
+        date: nextMonth.toISOString().split('T')[0],
+        time: '09:00 AM',
+        location: 'Harrismith Community Center',
+        organizer: 'Student Career Services',
+        attendees: 67,
+        maxAttendees: 120,
+        isRegistered: false,
+        image: 'https://via.placeholder.com/400x200?text=Career+Day'
+      },
+      {
+        id: '7',
+        title: 'Cultural Heritage Day',
+        description: 'Celebrate diversity with traditional performances, food, and cultural displays from the Free State region.',
+        type: 'social',
+        date: nextMonth.toISOString().split('T')[0],
         time: '11:00 AM',
         location: 'QwaQwa Community Center',
         organizer: 'Student Council',
@@ -100,6 +142,20 @@ export const EventsPage: React.FC = () => {
         maxAttendees: 250,
         isRegistered: false,
         image: 'https://via.placeholder.com/400x200?text=Cultural+Day'
+      },
+      {
+        id: '8',
+        title: 'End of Year Celebration',
+        description: 'Annual awards ceremony and year-end celebration. All achievements will be recognized!',
+        type: 'social',
+        date: '2025-12-15',
+        time: '05:00 PM',
+        location: 'Phuthaditjhaba High School Auditorium',
+        organizer: 'School Administration',
+        attendees: 234,
+        maxAttendees: 300,
+        isRegistered: true,
+        image: 'https://via.placeholder.com/400x200?text=Celebration'
       }
     ];
 

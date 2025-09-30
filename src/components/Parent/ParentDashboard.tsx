@@ -49,8 +49,8 @@ const ParentDashboard: React.FC = () => {
   const loadParentData = async () => {
     if (!user) return;
 
-    // Generate current dates for demo
-    const today = new Date();
+    // Generate dates for 2025 demo
+    const today = new Date('2025-10-01'); // October 1, 2025 for demo
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const nextWeek = new Date(today);
