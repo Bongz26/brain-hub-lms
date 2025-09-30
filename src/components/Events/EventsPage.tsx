@@ -67,14 +67,14 @@ export const EventsPage: React.FC = () => {
         title: 'Digital Learning Workshop',
         description: 'Learn about the latest educational technology tools and platforms. Perfect for students and parents wanting to maximize online learning!',
         type: 'academic',
-        date: tomorrow.toISOString().split('T')[0],
+        date: '2025-07-18',
         time: '02:00 PM',
-        location: 'Brain Hub LMS Virtual Classroom',
-        organizer: 'Brain Hub LMS Team',
+        location: 'Katleho Tutors Learning Center',
+        organizer: 'Katleho Tutors Team',
         attendees: 45,
         maxAttendees: 100,
         isRegistered: false,
-        image: 'https://via.placeholder.com/400x200?text=Digital+Workshop'
+        image: '/images/katleho/events/workshop.jpg'
       },
       {
         id: '2',
@@ -88,7 +88,7 @@ export const EventsPage: React.FC = () => {
         attendees: 145,
         maxAttendees: 200,
         isRegistered: true,
-        image: 'https://via.placeholder.com/400x200?text=Sports+Day'
+        image: '/images/katleho/events/sports-day.jpg'
       },
       {
         id: '3',
@@ -97,11 +97,12 @@ export const EventsPage: React.FC = () => {
         type: 'announcement',
         date: nextWeek.toISOString().split('T')[0],
         time: '02:00 PM',
-        location: 'Phuthaditjhaba High School',
-        organizer: 'School Administration',
+        location: 'Katleho Tutors Center, Phuthaditjhaba',
+        organizer: 'Katleho Tutors Administration',
         attendees: 112,
         maxAttendees: 150,
-        isRegistered: false
+        isRegistered: false,
+        image: '/images/katleho/events/team-photo.jpg'
       },
       {
         id: '4',
@@ -115,7 +116,7 @@ export const EventsPage: React.FC = () => {
         attendees: 89,
         maxAttendees: 150,
         isRegistered: false,
-        image: 'https://via.placeholder.com/400x200?text=Science+Fair'
+        image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop'
       },
       {
         id: '5',
@@ -129,7 +130,7 @@ export const EventsPage: React.FC = () => {
         attendees: 45,
         maxAttendees: 100,
         isRegistered: true,
-        image: 'https://via.placeholder.com/400x200?text=Math+Olympiad'
+        image: 'https://images.unsplash.com/photo-1596495577886-d920f1fb7238?w=800&auto=format&fit=crop'
       },
       {
         id: '6',
@@ -138,26 +139,26 @@ export const EventsPage: React.FC = () => {
         type: 'social',
         date: nextMonth.toISOString().split('T')[0],
         time: '09:00 AM',
-        location: 'Harrismith Community Center',
-        organizer: 'Student Career Services',
+        location: 'Katleho Tutors Center, Harrismith',
+        organizer: 'Katleho Tutors Career Services',
         attendees: 67,
         maxAttendees: 120,
         isRegistered: false,
-        image: 'https://via.placeholder.com/400x200?text=Career+Day'
+        image: '/images/katleho/events/career-guidance.jpg'
       },
       {
         id: '7',
         title: 'Cultural Heritage Day',
         description: 'Celebrate diversity with traditional performances, food, and cultural displays from the Free State region.',
         type: 'social',
-        date: nextMonth.toISOString().split('T')[0],
+        date: '2025-09-26',
         time: '11:00 AM',
         location: 'QwaQwa Community Center',
-        organizer: 'Student Council',
+        organizer: 'Katleho Tutors Student Council',
         attendees: 178,
         maxAttendees: 250,
         isRegistered: false,
-        image: 'https://via.placeholder.com/400x200?text=Cultural+Day'
+        image: '/images/katleho/events/heritage-day-1.jpg'
       },
       {
         id: '8',
@@ -166,12 +167,12 @@ export const EventsPage: React.FC = () => {
         type: 'social',
         date: '2025-12-15',
         time: '05:00 PM',
-        location: 'Phuthaditjhaba High School Auditorium',
-        organizer: 'School Administration',
+        location: 'Katleho Tutors Center, Phuthaditjhaba',
+        organizer: 'Katleho Tutors Administration',
         attendees: 234,
         maxAttendees: 300,
         isRegistered: true,
-        image: 'https://via.placeholder.com/400x200?text=Celebration'
+        image: '/images/katleho/events/awards-ceremony.jpg'
       }
     ];
 

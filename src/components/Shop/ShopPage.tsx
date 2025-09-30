@@ -30,86 +30,128 @@ export const ShopPage: React.FC = () => {
   }, []);
 
   const loadProducts = async () => {
+    // Products inspired by Katleho Tutors actual shop items
     const mockProducts: Product[] = [
+      // Katleho Tutors Branded Clothing (from their website)
       {
         id: '1',
-        name: 'Mathematics Workbook - Grade 10',
-        description: 'Comprehensive workbook with exercises and solutions',
-        category: 'books',
-        price: 120,
-        image: 'https://via.placeholder.com/300x300?text=Math+Workbook',
+        name: 'Katleho Tutors Black T-Shirt',
+        description: 'Official Katleho Tutors branded t-shirt - Black',
+        category: 'uniform',
+        price: 160,
+        image: '/images/katleho/black-tshirt.png',
         inStock: true,
         quantity: 25
       },
       {
         id: '2',
-        name: 'Scientific Calculator',
-        description: 'CASIO FX-82ZA PLUS II Scientific Calculator',
-        category: 'equipment',
-        price: 250,
-        image: 'https://via.placeholder.com/300x300?text=Calculator',
+        name: 'Katleho Tutors Grey Hoodie',
+        description: 'Comfortable grey hoodie with Katleho Tutors branding',
+        category: 'uniform',
+        price: 350,
+        image: '/images/katleho/grey-hoodie.jpg',
         inStock: true,
         quantity: 15
       },
       {
         id: '3',
-        name: 'Stationery Pack',
-        description: 'Includes pens, pencils, ruler, eraser, and sharpener',
-        category: 'stationery',
-        price: 85,
-        image: 'https://via.placeholder.com/300x300?text=Stationery',
-        inStock: true,
-        quantity: 40
-      },
-      {
-        id: '4',
-        name: 'Brain Hub Uniform T-Shirt',
-        description: 'Official Brain Hub branded t-shirt - Navy Blue',
+        name: 'Katleho Tutors White Golfer',
+        description: 'Classic white golfer shirt with embroidered logo',
         category: 'uniform',
-        price: 150,
-        image: 'https://via.placeholder.com/300x300?text=T-Shirt',
+        price: 200,
+        image: '/images/katleho/white-golfer.jpg',
         inStock: true,
         quantity: 30
       },
       {
-        id: '5',
-        name: 'English Grammar Guide',
-        description: 'Complete English grammar reference for grades 8-12',
-        category: 'books',
-        price: 95,
-        image: 'https://via.placeholder.com/300x300?text=Grammar+Guide',
+        id: '4',
+        name: 'Katleho Tutors Black Sweater',
+        description: 'Warm black sweater perfect for winter classes',
+        category: 'uniform',
+        price: 320,
+        image: '/images/katleho/black-sweater.jpg',
         inStock: true,
         quantity: 20
       },
       {
+        id: '5',
+        name: 'Katleho Tutors Grey T-Shirt',
+        description: 'Comfortable grey branded t-shirt',
+        category: 'uniform',
+        price: 160,
+        image: '/images/katleho/grey-tshirt.jpg',
+        inStock: true,
+        quantity: 28
+      },
+      {
         id: '6',
-        name: 'Geometry Set',
-        description: 'Complete geometry set with compass, protractor, and set squares',
-        category: 'equipment',
-        price: 75,
-        image: 'https://via.placeholder.com/300x300?text=Geometry+Set',
-        inStock: false,
-        quantity: 0
+        name: 'Mathematics Workbook - Grade 10',
+        description: 'Comprehensive workbook with exercises and solutions',
+        category: 'books',
+        price: 120,
+        image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop',
+        inStock: true,
+        quantity: 22
       },
       {
         id: '7',
-        name: 'Physical Sciences Textbook',
-        description: 'Grade 11 & 12 Physical Sciences textbook',
-        category: 'books',
-        price: 180,
-        image: 'https://via.placeholder.com/300x300?text=Science+Book',
+        name: 'Scientific Calculator',
+        description: 'CASIO FX-82ZA PLUS II Scientific Calculator',
+        category: 'equipment',
+        price: 250,
+        image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&auto=format&fit=crop',
         inStock: true,
         quantity: 12
       },
       {
         id: '8',
-        name: 'Study Notes Bundle',
-        description: 'Comprehensive study notes for all subjects - Grade 10',
-        category: 'stationery',
-        price: 200,
-        image: 'https://via.placeholder.com/300x300?text=Notes+Bundle',
+        name: 'Katleho Tutors Black Hoodie',
+        description: 'Premium black hoodie with Katleho Tutors logo',
+        category: 'uniform',
+        price: 350,
+        image: '/images/katleho/black-hoodie.jpg',
         inStock: true,
         quantity: 18
+      },
+      {
+        id: '9',
+        name: 'Stationery Pack',
+        description: 'Complete stationery set - pens, pencils, ruler, eraser',
+        category: 'stationery',
+        price: 85,
+        image: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=400&auto=format&fit=crop',
+        inStock: true,
+        quantity: 35
+      },
+      {
+        id: '10',
+        name: 'Katleho Tutors White Sweater',
+        description: 'Elegant white sweater with embroidered branding',
+        category: 'uniform',
+        price: 320,
+        image: 'https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?w=400&auto=format&fit=crop',
+        inStock: false,
+        quantity: 0
+      },
+      {
+        id: '11',
+        name: 'Physical Sciences Textbook',
+        description: 'Grade 11 & 12 Physical Sciences comprehensive guide',
+        category: 'books',
+        price: 180,
+        image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&auto=format&fit=crop',
+        inStock: true,
+        quantity: 14
+      },
+      {
+        id: '12',
+        name: 'Katleho Tutors Grey Golfer',
+        description: 'Professional grey golfer shirt for students',
+        category: 'uniform',
+        price: 200,
+        image: '/images/katleho/grey-golfer.jpg',
+        inStock: true,
+        quantity: 24
       }
     ];
 
