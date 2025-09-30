@@ -21,9 +21,9 @@ export const TutorDashboard: React.FC = () => {
     if (!user) return;
 
     const mockStudents = [
-      { id: 1, name: 'Sarah Johnson', grade: 10, progress: 75, lastActive: '2024-01-15' },
-      { id: 2, name: 'Mike Peterson', grade: 9, progress: 60, lastActive: '2024-01-14' },
-      { id: 3, name: 'Emma Davis', grade: 11, progress: 85, lastActive: '2024-01-16' },
+      { id: 1, name: 'Nthabiseng Mokoena', grade: 10, progress: 75, lastActive: '2024-01-15' },
+      { id: 2, name: 'Tebogo Moloi', grade: 9, progress: 60, lastActive: '2024-01-14' },
+      { id: 3, name: 'Palesa Twala', grade: 11, progress: 85, lastActive: '2024-01-16' },
     ];
 
     const mockResources: Resource[] = [

@@ -87,7 +87,7 @@ const Login: React.FC = () => {
         </div>
         <div className="text-center">
           <Link to="/signup" className="text-blue-600 hover:text-blue-800">
-            Create a new student account
+            Create a new account (Student / Tutor / Parent)
           </Link>
         </div>
       </div>

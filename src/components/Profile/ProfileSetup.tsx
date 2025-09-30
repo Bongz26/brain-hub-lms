@@ -104,6 +104,7 @@ export const ProfileSetup: React.FC = () => {
             >
               <option value="student">Student</option>
               <option value="tutor">Tutor</option>
+              <option value="parent">Parent</option>
             </select>
           </div>
 

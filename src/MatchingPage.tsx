@@ -24,7 +24,8 @@ interface Course {
   title: string;
   description: string;
   grade_level: number;
-  subject_id: string;
+  subject_id?: string;
+  subject?: string;
   tutor_id: string;
   price: number;
   is_active?: boolean;
@@ -120,6 +121,10 @@ const MatchingPage: React.FC = () => {
   const [editAvailability, setEditAvailability] = useState<{ tutorId: string; day: number } | null>(null);
   const [bookingModal, setBookingModal] = useState<Course | null>(null);
   const [loginModal, setLoginModal] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ start: string; end: string } | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [bookingForm, setBookingForm] = useState({ notes: '', duration: 60 });
   const calendarRef = useRef<FullCalendar>(null);
 
   useEffect(() => {
@@ -140,8 +145,12 @@ const MatchingPage: React.FC = () => {
           supabase.from('bookings').select('*'),
         ]);
 
-        if (coursesData.error) console.error('Error fetching courses:', coursesData.error);
-        else setCourses(coursesData.data || []);
+        if (coursesData.error) {
+          console.error('Error fetching courses:', coursesData.error);
+        } else {
+          console.log('Loaded courses:', coursesData.data);
+          setCourses(coursesData.data || []);
+        }
 
         if (tutorsData.error) console.error('Error fetching tutors:', tutorsData.error);
         else setTutors(tutorsData.data?.reduce((acc, tutor) => ({ ...acc, [tutor.id]: tutor }), {}) || {});
@@ -203,8 +212,16 @@ const MatchingPage: React.FC = () => {
   };
 
   const getSubjectName = (course: Course): string => {
+    // Check if course has subject field (new format) or subject_id (old format)
+    if (course.subject) {
+      return course.subject;
+    }
+    
+    if (course.subject_id) {
     const subject = subjects[course.subject_id];
     if (subject?.name) return subject.name;
+    }
+    
     const title = course.title.toLowerCase();
     if (title.includes('math') || title.includes('algebra')) return 'Mathematics';
     if (title.includes('science') && title.includes('physical')) return 'Physical Sciences';
@@ -216,8 +233,10 @@ const MatchingPage: React.FC = () => {
 
   const getGradeLevels = (course: Course): number[] => {
     const titleGrade = getGradeFromTitle(course);
+    if (course.subject_id) {
     const subject = subjects[course.subject_id];
     if (subject?.grade_levels) return subject.grade_levels;
+    }
     return [titleGrade];
   };
 
@@ -268,11 +287,21 @@ const MatchingPage: React.FC = () => {
     const isVerified = getIsVerified(course);
     const rating = getRating(course);
 
+    // More flexible matching - give points even for partial matches
     if (subjectName === prefs.subject) score += 40;
+    else if (prefs.subject && subjectName.toLowerCase().includes(prefs.subject.toLowerCase())) score += 20;
+    
     if (gradeLevels.includes(parseInt(prefs.grade))) score += 30;
+    else if (prefs.grade && Math.abs(gradeLevels[0] - parseInt(prefs.grade)) <= 2) score += 15; // Within 2 grades
+    
     if (schoolName === prefs.location) score += 20;
+    else if (prefs.location && schoolName.toLowerCase().includes(prefs.location.toLowerCase())) score += 10;
+    
     if (isVerified) score += 5;
     if (rating >= 4.0) score += 5;
+    
+    // Give base score to all courses so they show up
+    score += 10;
 
     return score;
   };
@@ -347,20 +376,30 @@ const MatchingPage: React.FC = () => {
       return;
     }
     setHasSearched(true);
+    
+    console.log('Search data:', data);
+    console.log('Available courses:', courses);
+    
     if (courses.length === 0) {
+      console.log('No courses available');
       setFilteredCourses([]);
       return;
     }
 
     const matches = courses
-      .map((course) => ({
+      .map((course) => {
+        const score = calculateMatchScore(course, data);
+        console.log(`Course: ${course.title}, Score: ${score}, Grade: ${course.grade_level}, Subject: ${getSubjectName(course)}`);
+        return {
         ...course,
-        score: calculateMatchScore(course, data),
-      }))
+          score: score,
+        };
+      })
       .filter((course) => course.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
+      .slice(0, 10); // Show more courses
 
+    console.log('Filtered matches:', matches);
     setFilteredCourses(matches);
   };
 
@@ -417,6 +456,118 @@ const MatchingPage: React.FC = () => {
     }
   };
 
+  const handleDateSelect = (selectInfo: any) => {
+    if (!user) {
+      alert('Please log in to book a session');
+      return;
+    }
+    
+    const start = selectInfo.startStr;
+    const end = selectInfo.endStr;
+    
+    setSelectedTimeSlot({ start, end });
+    
+    // Clear the selection
+    selectInfo.view.calendar.unselect();
+  };
+
+  const handleSimpleTimeSelection = () => {
+    if (!selectedDate || !selectedTime) {
+      alert('Please select both date and time');
+      return;
+    }
+
+    const startDateTime = new Date(`${selectedDate}T${selectedTime}`);
+    const endDateTime = new Date(startDateTime.getTime() + bookingForm.duration * 60000);
+    
+    setSelectedTimeSlot({
+      start: startDateTime.toISOString(),
+      end: endDateTime.toISOString()
+    });
+  };
+
+  const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    
+    // Generate next 14 days
+    for (let i = 1; i <= 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    
+    return dates;
+  };
+
+  const getAvailableTimes = () => {
+    return [
+      '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'
+    ];
+  };
+
+  const handleBookSession = async () => {
+    if (!user || !bookingModal || !selectedTimeSlot) {
+      alert('Please select a time slot to book');
+      return;
+    }
+
+    console.log('Attempting to book session with data:', {
+      student_id: user.id,
+      tutor_id: bookingModal.tutor_id,
+      course_id: bookingModal.id,
+      start_time: selectedTimeSlot.start,
+      end_time: selectedTimeSlot.end,
+      status: 'pending',
+      notes: bookingForm.notes
+    });
+
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert({
+          student_id: user.id,
+          tutor_id: bookingModal.tutor_id,
+          course_id: bookingModal.id,
+          start_time: selectedTimeSlot.start,
+          end_time: selectedTimeSlot.end,
+          status: 'pending',
+          notes: bookingForm.notes,
+          created_at: new Date().toISOString()
+        })
+        .select();
+
+      if (error) {
+        console.error('Database error details:', error);
+        alert(`Failed to book session: ${error.message}. Please check if the bookings table exists.`);
+        return;
+      }
+
+      console.log('Booking created successfully:', data);
+      alert('Session booked successfully! The tutor will confirm your booking.');
+      setBookingModal(null);
+      setSelectedTimeSlot(null);
+      setSelectedDate('');
+      setSelectedTime('');
+      setBookingForm({ notes: '', duration: 60 });
+    } catch (err) {
+      console.error('Exception during booking:', err);
+      
+      // Fallback: If database fails, show a success message anyway for demo purposes
+      if (err instanceof Error && err.message.includes('relation "bookings" does not exist')) {
+        alert('Session booking request submitted! (Note: Bookings table not set up yet - this is a demo booking)');
+        setBookingModal(null);
+        setSelectedTimeSlot(null);
+        setSelectedDate('');
+        setSelectedTime('');
+        setBookingForm({ notes: '', duration: 60 });
+        return;
+      }
+      
+      alert(`Failed to book session: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
@@ -447,54 +598,68 @@ const MatchingPage: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Subject</label>
               <select
-                {...registerSearch('subject', { required: 'Subject is required' })}
+                {...registerSearch('subject')}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               >
-                <option value="">Select Subject</option>
+                <option value="">All Subjects</option>
                 <option value="Mathematics">Mathematics</option>
                 <option value="Physical Sciences">Physical Sciences</option>
                 <option value="English Home Language">English Home Language</option>
+                <option value="English">English</option>
                 <option value="Natural Sciences">Natural Sciences</option>
                 <option value="Accounting">Accounting</option>
               </select>
-              {searchErrors.subject && <p className="text-red-500 text-sm mt-1">{searchErrors.subject.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Grade</label>
               <select
-                {...registerSearch('grade', { required: 'Grade is required' })}
+                {...registerSearch('grade')}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               >
-                <option value="">Select Grade</option>
+                <option value="">All Grades</option>
+                <option value="4">Grade 4</option>
+                <option value="5">Grade 5</option>
                 <option value="6">Grade 6</option>
+                <option value="7">Grade 7</option>
                 <option value="8">Grade 8</option>
                 <option value="9">Grade 9</option>
                 <option value="10">Grade 10</option>
                 <option value="11">Grade 11</option>
                 <option value="12">Grade 12</option>
               </select>
-              {searchErrors.grade && <p className="text-red-500 text-sm mt-1">{searchErrors.grade.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Location</label>
               <select
-                {...registerSearch('location', { required: 'Location is required' })}
+                {...registerSearch('location')}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               >
-                <option value="">Select Location</option>
+                <option value="">All Locations</option>
                 <option value="Phuthaditjhaba High">Phuthaditjhaba</option>
                 <option value="University Of Cape TOwn">Cape Town</option>
               </select>
-              {searchErrors.location && <p className="text-red-500 text-sm mt-1">{searchErrors.location.message}</p>}
             </div>
           </div>
+          <div className="flex gap-2 mt-4">
           <button
             type="submit"
-            className="mt-4 w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+              className="flex-1 bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
             disabled={loading}
           >
             {loading ? 'Loading Courses...' : 'Find Courses'}
           </button>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Showing all courses');
+                setFilteredCourses(courses.map(course => ({ ...course, score: 50 })));
+                setHasSearched(true);
+              }}
+              className="flex-1 bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-colors"
+            >
+              Show All Courses
+            </button>
+          </div>
         </form>
 
         {error && (
@@ -738,32 +903,145 @@ const MatchingPage: React.FC = () => {
 
         {bookingModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-4xl w-full">
+            <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <h2 className="text-2xl font-bold mb-4">Book Session for {bookingModal.title}</h2>
-              <div className="mb-4">
-                <FullCalendar
-                  ref={calendarRef}
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView="timeGridWeek"
-                  events={getCalendarEvents(bookingModal.tutor_id)}
-                  eventClick={handleEventClick}
-                  height="60vh"
-                  selectable={true}
-                  selectMirror={true}
-                  dayMaxEvents={true}
-                  weekends={true}
-                  slotMinTime="08:00:00"
-                  slotMaxTime="18:00:00"
+              
+              <div className="space-y-6">
+                {/* Date Selection */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Select Date</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {getAvailableDates().map((date) => {
+                      const dateObj = new Date(date);
+                      const isSelected = selectedDate === date;
+                      return (
+                        <button
+                          key={date}
+                          onClick={() => setSelectedDate(date)}
+                          className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div>{dateObj.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                          <div>{dateObj.getDate()}</div>
+                          <div className="text-xs">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Time Selection */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Select Time</h3>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {getAvailableTimes().map((time) => {
+                      const isSelected = selectedTime === time;
+                      return (
+                        <button
+                          key={time}
+                          onClick={() => setSelectedTime(time)}
+                          className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Session Details */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Session Details</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Session Duration
+                      </label>
+                      <select
+                        value={bookingForm.duration}
+                        onChange={(e) => setBookingForm({ ...bookingForm, duration: parseInt(e.target.value) })}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value={30}>30 minutes</option>
+                        <option value={60}>1 hour</option>
+                        <option value={90}>1.5 hours</option>
+                        <option value={120}>2 hours</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Notes (optional)
+                      </label>
+                      <textarea
+                        value={bookingForm.notes}
+                        onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                        placeholder="Any specific topics you'd like to focus on..."
+                        rows={3}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <div className="flex justify-end space-x-4">
+                  </div>
+                </div>
+
+                {/* Selected Time Display */}
+                {selectedDate && selectedTime && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-800 mb-2">Selected Session:</h4>
+                    <p className="text-green-700">
+                      {new Date(selectedDate).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })} at {selectedTime}
+                    </p>
+                    <p className="text-green-600 text-sm">
+                      Duration: {bookingForm.duration} minutes
+                    </p>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-4 border-t">
                 <button
                   type="button"
-                  onClick={() => { setBookingModal(null); }}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
-                >
-                  Close
+                    onClick={() => { 
+                      setBookingModal(null); 
+                      setSelectedTimeSlot(null);
+                      setSelectedDate('');
+                      setSelectedTime('');
+                      setBookingForm({ notes: '', duration: 60 });
+                    }}
+                    className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSimpleTimeSelection}
+                    disabled={!selectedDate || !selectedTime}
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                  >
+                    Confirm Time
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBookSession}
+                    disabled={!selectedTimeSlot}
+                    className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                  >
+                    Book Session
                 </button>
+                </div>
               </div>
             </div>
           </div>

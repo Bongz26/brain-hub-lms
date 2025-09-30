@@ -7,6 +7,7 @@ import { EditProfile } from '../Profile/EditProfile';
 import { ProfileSetup } from '../Profile/ProfileSetup';
 import { TutorDashboard } from '../Tutor/TutorDashboard';
 import StudentDashboard from '../Student/StudentDashboard';
+import ParentDashboard from '../Parent/ParentDashboard';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -59,6 +60,8 @@ export const Dashboard: React.FC = () => {
     return <TutorDashboard />;
   } else if (profile.role === 'student') {
     return <StudentDashboard user={user} profile={profile} />;
+  } else if (profile.role === 'parent') {
+    return <ParentDashboard />;
   } else if (profile.role === 'admin') {
     return <div className="max-w-7xl mx-auto px-4 py-8">Admin Dashboard (TBD)</div>;
   }

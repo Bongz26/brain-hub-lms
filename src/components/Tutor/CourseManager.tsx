@@ -24,26 +24,50 @@ export const CourseManager: React.FC = () => {
       // Load tutor's courses
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
-        .select(`
-          *,
-          subjects:subject_id (*),
-          enrollments (*)
-        `)
+        .select('*')
         .eq('tutor_id', user.id)
         .order('created_at', { ascending: false });
 
       if (coursesError) throw coursesError;
 
-      // Load subjects
+      // Load subjects - try with different approaches
+      console.log('Attempting to load subjects...');
       const { data: subjectsData, error: subjectsError } = await supabase
         .from('subjects')
         .select('*')
         .order('name');
 
-      if (subjectsError) throw subjectsError;
+      console.log('Subjects loading result:', { subjectsData, subjectsError });
+
+      // Use the subjects from the database
+      if (subjectsData && subjectsData.length > 0) {
+        console.log('Loaded subjects from database:', subjectsData.length, subjectsData);
+        setSubjects(subjectsData);
+      } else if (subjectsError) {
+        console.log('Error loading subjects:', subjectsError.message);
+        console.log('Full error:', subjectsError);
+        
+        // Fallback subjects based on your database data
+        const fallbackSubjects = [
+          { id: '7447a711-0212-4d2d-b2d2-eea1d32b16ad', name: 'Mathematics', description: 'Core mathematics curriculum', grade_levels: [4, 5, 6, 7, 8, 9, 10, 11, 12], created_at: new Date().toISOString() },
+          { id: 'a178fc6b-d1bb-4088-9151-86a59dec9062', name: 'English Home Language', description: 'English as home language', grade_levels: [4, 5, 6, 7, 8, 9, 10, 11, 12], created_at: new Date().toISOString() },
+          { id: 'b58f311b-cd3f-44f3-88eb-3f4009c2d292', name: 'Afrikaans FAL', description: 'Afrikaans as first additional language', grade_levels: [4, 5, 6, 7, 8, 9, 10, 11, 12], created_at: new Date().toISOString() },
+          { id: '5c8696a5-5fb2-4f8e-96b5-c7e90e9ee232', name: 'Natural Sciences', description: 'Natural sciences curriculum', grade_levels: [4, 5, 6, 7, 8, 9], created_at: new Date().toISOString() },
+          { id: 'aa02ad26-812f-4eb3-91ad-86b5624d19e3', name: 'Social Sciences', description: 'Social sciences curriculum', grade_levels: [4, 5, 6, 7, 8, 9], created_at: new Date().toISOString() },
+          { id: 'e991c697-ab1c-478d-9ac1-f3c7aa97b28d', name: 'Physical Sciences', description: 'Physical sciences for higher grades', grade_levels: [10, 11, 12], created_at: new Date().toISOString() },
+          { id: '49e56f48-c900-4941-bd18-7fd0936e09f9', name: 'Life Sciences', description: 'Life sciences for higher grades', grade_levels: [10, 11, 12], created_at: new Date().toISOString() },
+          { id: '065f3a17-07f2-4abc-bdfa-bc743d82c8c7', name: 'Accounting', description: 'Accounting curriculum', grade_levels: [10, 11, 12], created_at: new Date().toISOString() },
+          { id: '27597ee2-e11d-4838-bcbb-cd7ae7a4441d', name: 'Business Studies', description: 'Business studies curriculum', grade_levels: [10, 11, 12], created_at: new Date().toISOString() },
+          { id: 'aec0e763-f3b1-4146-a602-e92d72069f79', name: 'English', description: 'English language studies', grade_levels: [10, 11, 12], created_at: new Date().toISOString() }
+        ];
+        console.log('Using fallback subjects due to database error');
+        setSubjects(fallbackSubjects);
+      } else {
+        console.log('No subjects found in database');
+        setSubjects([]);
+      }
 
       setCourses(coursesData || []);
-      setSubjects(subjectsData || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -116,7 +140,7 @@ export const CourseManager: React.FC = () => {
     const [formData, setFormData] = useState({
       title: '',
       description: '',
-      subject_id: '',
+      subject: '',
       grade_level: 10,
       price: 0,
       max_students: 20,
@@ -126,25 +150,76 @@ export const CourseManager: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!user) return;
+      console.log('Form submitted with data:', formData);
+      
+      if (!user) {
+        console.log('No user found');
+        return;
+      }
 
       setSubmitting(true);
       try {
-        const { error } = await supabase
+        // Find the subject name from the selected subject ID
+        const selectedSubject = subjects.find(s => s.id === formData.subject);
+        const subjectName = selectedSubject ? selectedSubject.name : formData.subject;
+        
+        console.log('Selected subject:', selectedSubject);
+        console.log('Subject name to save:', subjectName);
+
+        // Try with subject column first, fallback to basic fields if it doesn't exist
+        const courseData = {
+          title: formData.title,
+          description: formData.description,
+          subject: subjectName,
+          grade_level: formData.grade_level,
+          price: formData.price,
+          max_students: formData.max_students,
+          duration_weeks: formData.duration_weeks,
+          tutor_id: user.id,
+          is_active: true
+        };
+        
+        console.log('Course data to insert:', courseData);
+
+        let { error } = await supabase
           .from('courses')
-          .insert({
-            ...formData,
+          .insert(courseData);
+
+        // If subject column doesn't exist, try without it
+        if (error && error.message.includes("Could not find the 'subject' column")) {
+          console.log('Subject column not found, trying without subject field...');
+          const fallbackData = {
+            title: formData.title,
+            description: formData.description,
+            grade_level: formData.grade_level,
+            price: formData.price,
+            max_students: formData.max_students,
+            duration_weeks: formData.duration_weeks,
             tutor_id: user.id,
             is_active: true
-          });
+          };
+          
+          console.log('Fallback course data:', fallbackData);
+          
+          const fallbackResult = await supabase
+            .from('courses')
+            .insert(fallbackData);
+            
+          error = fallbackResult.error;
+        }
 
-        if (error) throw error;
+        if (error) {
+          console.error('Database error:', error);
+          throw error;
+        }
+        
+        console.log('Course created successfully!');
 
         setShowCreateModal(false);
         setFormData({
           title: '',
           description: '',
-          subject_id: '',
+          subject: '',
           grade_level: 10,
           price: 0,
           max_students: 20,
@@ -153,6 +228,7 @@ export const CourseManager: React.FC = () => {
         loadData();
       } catch (error) {
         console.error('Error creating course:', error);
+        alert(`Failed to create course: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setSubmitting(false);
       }
@@ -193,12 +269,14 @@ export const CourseManager: React.FC = () => {
                   <select
                     required
                     className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
-                    value={formData.subject_id}
-                    onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   >
                     <option value="">Select Subject</option>
-                    {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>{subject.name}</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </option>
                     ))}
                   </select>
                 </div>

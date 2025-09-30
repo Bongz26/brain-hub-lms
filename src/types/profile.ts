@@ -1,6 +1,6 @@
 export interface Profile {
   id: string;
-  role: 'student' | 'tutor' | 'admin' | 'school';
+  role: 'student' | 'tutor' | 'parent' | 'admin' | 'school';
   first_name: string;
   last_name: string;
   grade_level?: number;
@@ -13,7 +13,7 @@ export interface Profile {
 }
 
 export interface CreateProfileData {
-  role: 'student' | 'tutor' | 'admin' | 'school';
+  role: 'student' | 'tutor' | 'parent' | 'admin' | 'school';
   first_name: string;
   last_name: string;
   grade_level?: number;

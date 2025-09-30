@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Profile } from '../../types/profile';
+import NotificationCenter from '../Notifications/NotificationCenter';
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
@@ -83,17 +84,58 @@ export const Header: React.FC = () => {
             >
               {profile?.role === 'tutor' ? 'Student Bookings' : 'My Bookings'}
             </Link>
+            <Link 
+              to="/events" 
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Events
+            </Link>
+            <Link 
+              to="/shop" 
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Shop
+            </Link>
+            <Link 
+              to="/transportation" 
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Transport
+            </Link>
+            <Link 
+              to="/virtual-classroom" 
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Classroom
+            </Link>
+            <Link 
+              to="/forum" 
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Forum
+            </Link>
+            {profile?.role === 'student' && (
+              <>
+                <Link 
+                  to="/quizzes" 
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Quizzes
+                </Link>
+                <Link 
+                  to="/analytics" 
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Analytics
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 19.5L9 15l3 3 6-6" />
-              </svg>
-              <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
-            </button>
+            {/* Notification Center */}
+            <NotificationCenter />
 
             {/* Profile Dropdown */}
             <div className="relative">

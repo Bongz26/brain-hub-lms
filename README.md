@@ -1,6 +1,56 @@
-# Getting Started with Create React App
+# Brain Hub LMS - Professional Learning Management System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A comprehensive Learning Management System built with React, TypeScript, and Supabase. Features role-based access control for tutors and students, course management, session booking, and progress tracking.
+
+## 🚀 Quick Demo
+
+1. **Start the application**: `npm start`
+2. **Visit demo page**: Navigate to `/demo` for platform overview
+3. **Setup demo data**: Go to `/demo-setup` to populate with realistic data
+4. **Try demo accounts**: Use the provided credentials to explore features
+
+### Demo Accounts
+- **Tutors**: `sarah.math@brainhub.com`, `mike.science@brainhub.com`, `emma.english@brainhub.com` (password: `demo123`)
+- **Students**: `alex.student@brainhub.com`, `jessica.student@brainhub.com`, `david.student@brainhub.com` (password: `demo123`)
+
+## ✨ Features
+
+### For Tutors:
+- Course creation and management
+- Student progress tracking
+- Session booking management
+- Learning materials upload
+- Analytics and reporting
+
+### For Students:
+- Course discovery and enrollment
+- Tutoring session booking
+- Progress tracking
+- Assignment submission
+- Resource access
+
+### Platform Features:
+- Role-based access control
+- Real-time updates
+- Professional UI/UX
+- Mobile responsive design
+- Secure authentication
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Styling**: Tailwind CSS
+- **Backend**: Supabase (Database + Auth)
+- **Routing**: React Router DOM
+- **State Management**: React Context + Hooks
+
+## 📖 Demo Guide
+
+See [DEMO_GUIDE.md](./DEMO_GUIDE.md) for detailed demo scenarios and feature walkthroughs.
+
+---
+
+*This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).*
 
 ## Available Scripts
 
