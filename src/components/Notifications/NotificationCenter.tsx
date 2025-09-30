@@ -141,16 +141,16 @@ export const NotificationCenter: React.FC = () => {
             className="fixed inset-0 z-10"
             onClick={() => setShowDropdown(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+          <div className="absolute right-0 z-20 mt-2 w-screen max-w-sm sm:max-w-md md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
             {/* Header */}
-            <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="p-3 sm:p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                 Notifications
               </h3>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
                 >
                   Mark all read
                 </button>
@@ -158,11 +158,11 @@ export const NotificationCenter: React.FC = () => {
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-6 sm:p-8 text-center text-gray-500">
                   <svg
-                    className="w-16 h-16 mx-auto mb-4 text-gray-300"
+                    className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -174,13 +174,13 @@ export const NotificationCenter: React.FC = () => {
                       d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                     />
                   </svg>
-                  <p>No notifications</p>
+                  <p className="text-sm sm:text-base">No notifications</p>
                 </div>
               ) : (
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    className={`p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors ${
                       !notification.read ? 'bg-blue-50' : ''
                     }`}
                     onClick={() => {
@@ -190,21 +190,21 @@ export const NotificationCenter: React.FC = () => {
                       }
                     }}
                   >
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">{getIcon(notification.type)}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <span className="text-xl sm:text-2xl flex-shrink-0">{getIcon(notification.type)}</span>
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs sm:text-sm font-medium text-gray-900 break-words">
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <span className="ml-2 w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></span>
+                            <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1"></span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
                           {getTimeAgo(notification.createdAt)}
                         </p>
                       </div>
@@ -216,10 +216,10 @@ export const NotificationCenter: React.FC = () => {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="p-3 bg-gray-50 border-t border-gray-200 text-center">
+              <div className="p-2 sm:p-3 bg-gray-50 border-t border-gray-200 text-center">
                 <a
                   href="/notifications"
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium inline-block py-1"
                 >
                   View all notifications
                 </a>
