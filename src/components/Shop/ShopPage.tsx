@@ -129,7 +129,7 @@ export const ShopPage: React.FC = () => {
         description: 'Elegant white sweater with embroidered branding',
         category: 'uniform',
         price: 320,
-        image: 'https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?w=400&auto=format&fit=crop',
+        image: '/images/katleho/white-sweater.jpg',
         inStock: false,
         quantity: 0
       },
