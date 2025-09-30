@@ -141,7 +141,7 @@ export const NotificationCenter: React.FC = () => {
             className="fixed inset-0 z-10"
             onClick={() => setShowDropdown(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-screen max-w-sm sm:max-w-md md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+          <div className="fixed sm:absolute right-0 left-0 sm:left-auto z-20 mt-2 mx-2 sm:mx-0 w-auto sm:w-96 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
             {/* Header */}
             <div className="p-3 sm:p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">
