@@ -20,21 +20,32 @@ export const TutorDashboard: React.FC = () => {
   const loadTutorData = async () => {
     if (!user) return;
 
+    // Generate dates for 2025
+    const today = new Date('2025-10-01');
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
     const mockStudents = [
-      { id: 1, name: 'Nthabiseng Mokoena', grade: 10, progress: 75, lastActive: '2024-01-15' },
-      { id: 2, name: 'Tebogo Moloi', grade: 9, progress: 60, lastActive: '2024-01-14' },
-      { id: 3, name: 'Palesa Twala', grade: 11, progress: 85, lastActive: '2024-01-16' },
+      { id: 1, name: 'Nthabiseng Mokoena', grade: 10, progress: 75, lastActive: yesterday.toISOString().split('T')[0] },
+      { id: 2, name: 'Tebogo Moloi', grade: 9, progress: 60, lastActive: today.toISOString().split('T')[0] },
+      { id: 3, name: 'Palesa Twala', grade: 11, progress: 85, lastActive: yesterday.toISOString().split('T')[0] },
     ];
 
     const mockResources: Resource[] = [
-      { id: 1, title: 'Algebra Basics', type: 'worksheet', subject: 'Mathematics', uploaded: '2024-01-10', downloads: 15 },
-      { id: 2, title: 'Chemistry Lab Notes', type: 'notes', subject: 'Science', uploaded: '2024-01-12', downloads: 8 },
-      { id: 3, title: 'Essay Writing Guide', type: 'guide', subject: 'English', uploaded: '2024-01-08', downloads: 22 },
+      { id: 1, title: 'Algebra Basics', type: 'worksheet', subject: 'Mathematics', uploaded: lastWeek.toISOString().split('T')[0], downloads: 15 },
+      { id: 2, title: 'Chemistry Lab Notes', type: 'notes', subject: 'Science', uploaded: twoDaysAgo.toISOString().split('T')[0], downloads: 8 },
+      { id: 3, title: 'Essay Writing Guide', type: 'guide', subject: 'English', uploaded: lastWeek.toISOString().split('T')[0], downloads: 22 },
     ];
 
     const mockAssignments: Assignment[] = [
-      { id: 1, title: 'Algebra Homework', subject: 'Mathematics', dueDate: '2024-01-20', submitted: 2, total: 3 },
-      { id: 2, title: 'Science Project', subject: 'Science', dueDate: '2024-01-25', submitted: 1, total: 3 },
+      { id: 1, title: 'Algebra Homework', subject: 'Mathematics', dueDate: nextWeek.toISOString().split('T')[0], submitted: 2, total: 3 },
+      { id: 2, title: 'Science Project', subject: 'Science', dueDate: nextWeek.toISOString().split('T')[0], submitted: 1, total: 3 },
     ];
 
     setStudents(mockStudents);

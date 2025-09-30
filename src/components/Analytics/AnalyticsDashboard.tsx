@@ -50,10 +50,10 @@ export const AnalyticsDashboard: React.FC = () => {
         { subject: 'Physical Education', score: 88, trend: 'up' }
       ],
       recentActivity: [
-        { date: '2024-01-15', activity: 'Completed Math Assignment', score: 95 },
-        { date: '2024-01-14', activity: 'Attended English Session' },
-        { date: '2024-01-13', activity: 'Submitted Science Project', score: 88 },
-        { date: '2024-01-12', activity: 'Completed Quiz - History', score: 76 }
+        { date: '2025-10-01', activity: 'Completed Math Assignment', score: 95 },
+        { date: '2025-09-30', activity: 'Attended English Session' },
+        { date: '2025-09-29', activity: 'Submitted Science Project', score: 88 },
+        { date: '2025-09-28', activity: 'Completed Quiz - History', score: 76 }
       ]
     };
 

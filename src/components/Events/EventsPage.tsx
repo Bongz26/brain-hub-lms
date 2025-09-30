@@ -23,10 +23,26 @@ export const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
+    loadProfile();
     loadEvents();
   }, [user, filter]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const loadEvents = async () => {
     if (!user) return;
@@ -165,6 +181,17 @@ export const EventsPage: React.FC = () => {
 
   const handleRegister = async (eventId: string) => {
     // In a real app, this would call the API
+    const event = events.find(e => e.id === eventId);
+    
+    // Different messaging based on role
+    if (profile?.role === 'tutor' || profile?.role === 'parent') {
+      const action = event?.isRegistered ? 'attendance cancelled' : 'attendance confirmed';
+      alert(`✅ Your ${action} for this event!`);
+    } else {
+      const action = event?.isRegistered ? 'unregistered from' : 'registered for';
+      alert(`✅ Successfully ${action} this event!`);
+    }
+    
     setEvents(prev =>
       prev.map(event =>
         event.id === eventId
@@ -172,6 +199,16 @@ export const EventsPage: React.FC = () => {
           : event
       )
     );
+  };
+
+  const getButtonText = (event: Event) => {
+    if (profile?.role === 'tutor') {
+      return event.isRegistered ? '✓ Attendance Confirmed' : '📋 Confirm Attendance';
+    } else if (profile?.role === 'parent') {
+      return event.isRegistered ? '✓ RSVP Confirmed' : '📋 RSVP for Event';
+    } else {
+      return event.isRegistered ? '✓ Registered' : 'Register Now';
+    }
   };
 
   const getEventTypeColor = (type: string) => {
@@ -294,7 +331,7 @@ export const EventsPage: React.FC = () => {
                   </span>
                   {event.isRegistered && (
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      ✓ Registered
+                      {profile?.role === 'tutor' ? '✓ Attending' : profile?.role === 'parent' ? '✓ RSVP' : '✓ Registered'}
                     </span>
                   )}
                 </div>
@@ -344,10 +381,10 @@ export const EventsPage: React.FC = () => {
                   }`}
                 >
                   {event.isRegistered
-                    ? 'Unregister'
+                    ? profile?.role === 'tutor' ? 'Cancel Attendance' : profile?.role === 'parent' ? 'Cancel RSVP' : 'Unregister'
                     : event.maxAttendees && event.attendees >= event.maxAttendees
                     ? 'Event Full'
-                    : 'Register for Event'}
+                    : getButtonText(event)}
                 </button>
               </div>
             </div>

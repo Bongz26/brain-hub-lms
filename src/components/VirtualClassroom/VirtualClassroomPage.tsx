@@ -30,14 +30,21 @@ export const VirtualClassroomPage: React.FC = () => {
   }, [user]);
 
   const loadSessions = async () => {
-    // Mock virtual classroom sessions
+    // Generate current dates for 2025
+    const today = new Date('2025-10-01');
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Mock virtual classroom sessions with 2025 dates
     const mockSessions: ClassSession[] = [
       {
         id: '1',
         title: 'Mathematics - Algebra Review',
         tutor: 'Mr. Thabo Radebe',
         subject: 'Mathematics',
-        date: '2024-02-01',
+        date: today.toISOString().split('T')[0],
         time: '10:00 AM',
         duration: 60,
         meetingLink: 'https://zoom.us/j/123456789',
@@ -51,7 +58,7 @@ export const VirtualClassroomPage: React.FC = () => {
         title: 'Physical Sciences - Chemistry Basics',
         tutor: 'Ms. Lerato Mofokeng',
         subject: 'Physical Sciences',
-        date: '2024-02-02',
+        date: tomorrow.toISOString().split('T')[0],
         time: '2:00 PM',
         duration: 90,
         meetingLink: 'https://teams.microsoft.com/meet/abc123',
@@ -65,7 +72,7 @@ export const VirtualClassroomPage: React.FC = () => {
         title: 'English - Essay Writing Workshop',
         tutor: 'Mr. Kgotso Nhlapo',
         subject: 'English',
-        date: '2024-01-30',
+        date: yesterday.toISOString().split('T')[0],
         time: '3:00 PM',
         duration: 60,
         meetingLink: 'https://zoom.us/j/987654321',
