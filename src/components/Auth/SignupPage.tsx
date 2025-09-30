@@ -8,6 +8,8 @@ const SignupPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [schoolName, setSchoolName] = useState('');
+  const [role, setRole] = useState<'student' | 'tutor' | 'parent'>('student');
+  const [gradeLevel, setGradeLevel] = useState(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -31,15 +33,15 @@ const SignupPage: React.FC = () => {
             id: data.user.id,
             first_name: firstName,
             last_name: lastName,
-            role: 'student',
+            role: role,
             school_name: schoolName,
-            grade_level: 10, // Default grade, can be a form field later
-            bio: 'New student profile',
+            grade_level: role === 'student' ? gradeLevel : undefined,
+            bio: `New ${role} profile`,
             avatar_url: 'https://via.placeholder.com/100',
           });
         if (profileError) throw profileError;
 
-        alert('Signup successful! Check your email for confirmation.');
+        alert('Signup successful! You can now log in.');
         navigate('/');
       }
     } catch (err: any) {
@@ -54,8 +56,11 @@ const SignupPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create Student Account
+            Create Your Account
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Join Brain Hub as a student, tutor, or parent
+          </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSignup}>
           {error && (
@@ -63,6 +68,52 @@ const SignupPage: React.FC = () => {
               {error}
             </div>
           )}
+          
+          {/* Role Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              I am a
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setRole('student')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  role === 'student' 
+                    ? 'border-blue-600 bg-blue-50 text-blue-600' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-3xl mb-2">🎓</div>
+                <div className="font-medium">Student</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('tutor')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  role === 'tutor' 
+                    ? 'border-green-600 bg-green-50 text-green-600' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-3xl mb-2">👨‍🏫</div>
+                <div className="font-medium">Tutor</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('parent')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  role === 'parent' 
+                    ? 'border-purple-600 bg-purple-50 text-purple-600' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-3xl mb-2">👨‍👩‍👧</div>
+                <div className="font-medium">Parent</div>
+              </button>
+            </div>
+          </div>
+
           <div>
             <input
               type="email"
@@ -78,7 +129,7 @@ const SignupPage: React.FC = () => {
               type="password"
               required
               className="relative block w-full px-3 py-2 border border-gray-300 rounded-md"
-              placeholder="Password"
+              placeholder="Password (min 6 characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -113,6 +164,25 @@ const SignupPage: React.FC = () => {
               onChange={(e) => setSchoolName(e.target.value)}
             />
           </div>
+          
+          {/* Grade Level for Students */}
+          {role === 'student' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Grade Level
+              </label>
+              <select
+                required
+                className="relative block w-full px-3 py-2 border border-gray-300 rounded-md"
+                value={gradeLevel}
+                onChange={(e) => setGradeLevel(parseInt(e.target.value))}
+              >
+                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map(grade => (
+                  <option key={grade} value={grade}>Grade {grade}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <button
               type="submit"
